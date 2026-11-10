@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartKDS & Menu - arc42 Entrega 3</title>
+<style>
+  :root { --texto:#1d2330; --suave:#5d6678; --borda:#d6dbe3; --destaque:#c2410c; --fundo:#ffffff; --faixa:#f5f6f8; }
+  body { font-family: "Segoe UI", Roboto, system-ui, sans-serif; color: var(--texto); background: var(--fundo); max-width: 980px; margin: 0 auto; padding: 24px 28px 60px; line-height: 1.5; font-size: 14.5px; }
+  h1 { font-size: 30px; margin: 0 0 4px; }
+  h2 { font-size: 21px; border-bottom: 2px solid var(--destaque); padding-bottom: 4px; margin-top: 36px; }
+  h3 { font-size: 16.5px; margin-top: 22px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 16px; font-size: 13.5px; }
+  th, td { border: 1px solid var(--borda); padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: var(--faixa); }
+  code { background: var(--faixa); padding: 1px 4px; border-radius: 3px; font-size: 12.5px; word-break: break-all; }
+  .capa { text-align: center; padding: 60px 0 40px; border-bottom: 1px solid var(--borda); }
+  .capa p { color: var(--suave); margin: 4px 0; }
+  .nota { background: #fff7ed; border-left: 4px solid var(--destaque); padding: 8px 12px; margin: 12px 0; }
+  .print { border: 2px dashed var(--borda); border-radius: 8px; padding: 14px; margin: 12px 0; min-height: 120px; color: var(--suave); }
+  .print b { color: var(--texto); }
+  .mermaid { background: var(--fundo); margin: 10px 0 18px; text-align: center; }
+  figcaption { font-weight: 600; font-size: 13px; margin: 4px 0 10px; }
+  .preencher { color: var(--destaque); font-weight: 600; }
+  @media print {
+    body { padding: 0; max-width: none; font-size: 12px; }
+    h2 { page-break-before: always; }
+    .capa + h2 { page-break-before: auto; }
+    .mermaid, table, .print { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<section class="capa">
+  <h1>SmartKDS &amp; Menu</h1>
+  <p>Documentação de Arquitetura de Software · arc42 · C4 Model · <b>Atualização da Entrega 3</b></p>
+  <p>Arthur Sales Major · Vinicius Ogasawara · Luiz Eduardo Assi · Rodrigo Petrelli Glir</p>
+  <p>Novembro de 2026</p>
+</section>
+
+<p>Este documento complementa a documentação arc42 das entregas anteriores com o que foi implementado e publicado na
+Entrega 3: links, Software Architecture Canvas e C4 atualizados (contexto, contêineres e componentes), decisões novas
+e os prints exigidos. Para gerar o PDF, abra este arquivo no navegador e use <i>Imprimir → Salvar como PDF</i>.</p>
+
+<h2>1. Links da entrega</h2>
+<p class="nota">Substitua os valores <span class="preencher">&lt;...&gt;</span> pelos endereços reais após a publicação
+(roteiro em <code>docs/ENTREGA.md</code>).</p>
+<table>
+  <tr><th>Item</th><th>Link</th></tr>
+  <tr><td>GitHub — repositório guarda-chuva (documentação, compose, infra)</td><td><code>https://github.com/&lt;owner&gt;/smartkds-menu</code></td></tr>
+  <tr><td>GitHub — Microfrontend</td><td><code>https://github.com/&lt;owner&gt;/smartkds-microfrontends</code></td></tr>
+  <tr><td>GitHub — BFF</td><td><code>https://github.com/&lt;owner&gt;/smartkds-bff</code></td></tr>
+  <tr><td>GitHub — Microsserviço Mongo (catálogo)</td><td><code>https://github.com/&lt;owner&gt;/smartkds-catalogo-service</code></td></tr>
+  <tr><td>GitHub — Microsserviço SQL (pedido)</td><td><code>https://github.com/&lt;owner&gt;/smartkds-pedido-service</code></td></tr>
+  <tr><td>GitHub — Azure Function</td><td><code>https://github.com/&lt;owner&gt;/smartkds-status-operacional-function</code></td></tr>
+  <tr><td>GitHub — API Gateway e demais serviços</td><td><code>smartkds-api-gateway</code>, <code>smartkds-producao-service</code>, <code>smartkds-estabelecimento-service</code></td></tr>
+  <tr><td>Docker Hub</td><td><code>https://hub.docker.com/u/&lt;usuario&gt;</code> — <code>smartkds-catalogo-service</code>, <code>smartkds-pedido-service</code>, <code>smartkds-producao-service</code>, <code>smartkds-estabelecimento-service</code>, <code>smartkds-api-gateway</code>, <code>smartkds-bff-mesa</code>, <code>smartkds-bff-kds</code>, <code>smartkds-bff-admin</code>, <code>smartkds-status-operacional-function</code> (tag <code>v1</code>)</td></tr>
+  <tr><td>API Gateway</td><td><code>https://&lt;gateway&gt;</code></td></tr>
+  <tr><td>Endpoint agregado</td><td><code>https://&lt;gateway&gt;/bff/admin/aggregated-data</code></td></tr>
+  <tr><td>Swagger — BFFs</td><td><code>https://&lt;gateway&gt;/bff/admin/docs</code> · <code>/bff/mesa/docs</code> · <code>/bff/kds/docs</code></td></tr>
+  <tr><td>Swagger — Microsserviços</td><td><code>https://&lt;gateway&gt;/docs/catalogo/swagger-ui.html</code> · <code>/docs/pedido/swagger-ui.html</code> · <code>/docs/producao/swagger-ui.html</code> · <code>/docs/estabelecimento/swagger-ui.html</code></td></tr>
+  <tr><td>Swagger — Eventos (AsyncAPI 3.0)</td><td><code>https://&lt;gateway&gt;/bff/admin/eventos</code></td></tr>
+  <tr><td>Azure Function</td><td><code>https://&lt;function-app&gt;.azurewebsites.net/api/status-operacional?tenantId=demo</code></td></tr>
+  <tr><td>Frontend — operação (gerente, cozinha, atendente)</td><td><code>https://&lt;swa-shell-operacao&gt;</code></td></tr>
+  <tr><td>Frontend — mesa do cliente (QR Code)</td><td><code>https://&lt;swa-shell-mesa&gt;/m/demo-mesa-1</code></td></tr>
+  <tr><td>Vídeo no YouTube</td><td><code>https://youtu.be/&lt;id&gt;</code></td></tr>
+</table>
+
+<h3>1.1 Requisitos da Entrega 3 e onde estão atendidos</h3>
+<table>
+  <tr><th>Requisito</th><th>Implementação</th></tr>
+  <tr><td>Microfrontend (React) que consome apenas o BFF</td><td>2 shells + 4 remotes (Module Federation). Os remotes só chamam <code>/bff/**</code> pelo gateway; testes de arquitetura proíbem <code>fetch</code> fora de <code>src/api</code> e import entre remotes.</td></tr>
+  <tr><td>BFF Node.js: agregação, proxy CRUD, microsserviços e Function</td><td><code>bff-admin</code> (agregação + proxy CRUD), <code>bff-mesa</code> e <code>bff-kds</code> (composição + SSE). Node 22 + Fastify.</td></tr>
+  <tr><td><code>GET /aggregated-data</code> (MS1 + MS2 + Function em um response)</td><td><code>bff-admin</code>: chamadas em paralelo a <code>catalogo-service</code>, <code>pedido-service</code> e <code>status-operacional</code> (+ indicadores do <code>producao-service</code>), com situação e latência de cada fonte.</td></tr>
+  <tr><td>Microsserviço 1 — MongoDB Atlas, CRUD, Swagger</td><td><code>catalogo-service</code>: POST/GET/GET por id/PUT/PATCH/DELETE de itens + versões imutáveis do cardápio.</td></tr>
+  <tr><td>Microsserviço 2 — Azure SQL, CRUD, Swagger</td><td><code>pedido-service</code>: POST abrir comanda e adicionar item, GET listar/obter, PATCH alterar item, DELETE cancelar item/comanda, POST confirmar/fechar. Azure SQL com RLS por <code>SESSION_CONTEXT</code>.</td></tr>
+  <tr><td>Azure Function (HTTP Trigger)</td><td><code>status-operacional</code>: faixa horária, pico e multiplicador do tempo de preparo.</td></tr>
+  <tr><td>API Gateway (roteamento, segurança, entrada única)</td><td>Spring Cloud Gateway: roteamento por prefixo, JWT do Keycloak, tenant sempre sobrescrito, CORS, rate limit, correlação.</td></tr>
+  <tr><td>Event-Driven Architecture</td><td>RabbitMQ com Transactional Outbox, consumo idempotente (inbox), DLQ e saga coreografada; contrato AsyncAPI.</td></tr>
+  <tr><td>Clean Architecture + Vertical Slice</td><td>Domain = <code>shared/dominio</code> (Java puro); Application = <code>Handler</code>/<code>Query</code> da fatia; Infrastructure = <code>shared/persistencia|outbox|inbox|integracao</code>; API = <code>Endpoint</code>/<code>Listener</code>. Fatias em <code>features/&lt;fatia&gt;</code>.</td></tr>
+  <tr><td>Testes unitários e de arquitetura</td><td>JUnit + ArchUnit (13 a 18 regras por serviço), integração com PostgreSQL real e SQL Server (Testcontainers); Vitest nos BFFs, Function e frontends com testes de arquitetura por imports.</td></tr>
+  <tr><td>Docker Hub</td><td>Dockerfile por serviço/BFF/gateway/function; <code>scripts/publicar-imagens.sh</code> e workflow <code>cd.yml</code>.</td></tr>
+  <tr><td>Repositórios públicos e README</td><td>Um repositório por parte (<code>scripts/publicar-github.sh</code>) e README com arquitetura, tecnologias, execução e alunos em cada projeto.</td></tr>
+</table>
+
+<h2>2. Software Architecture Canvas (atualizado)</h2>
+<table>
+  <tr><th style="width:24%">Bloco</th><th>Conteúdo</th></tr>
+  <tr><td><b>Business Case</b></td><td>Reduzir o tempo entre o pedido e a entrega do prato, eliminando a comanda em papel: o cliente pede pelo celular, a cozinha recebe o ticket na hora e o gerente enxerga o gargalo em tempo real.</td></tr>
+  <tr><td><b>Business Context</b></td><td>Restaurantes de pequeno e médio porte (SaaS multi-tenant), mesas com QR Code, estações de produção (grill, fritura, bar, sobremesa) e equipe de salão e cozinha.</td></tr>
+  <tr><td><b>Functional Overview</b></td><td>Cardápio digital versionado, comanda eletrônica pelo QR Code, KDS por estação com SLA e alerta, CRUD completo de comandas, fechamento, painel agregado (<code>/aggregated-data</code>) e auditoria.</td></tr>
+  <tr><td><b>Quality Goals</b></td><td>1. Latência na cozinha · 2. Resiliência e degradação parcial · 3. Isolamento multi-tenant · 4. Evolutibilidade e deploy independente · 5. Observabilidade · 6. Economicidade</td></tr>
+  <tr><td><b>Organisational Constraints</b></td><td>Equipe de 4 alunos · um semestre · créditos estudantis (Azure for Students e camadas gratuitas) · LGPD</td></tr>
+  <tr><td><b>Technical Constraints</b></td><td>React 18 + Vite + Module Federation · BFFs Node.js 22 (Fastify) · Microsserviços Java 21 / Spring Boot 3.5 em Vertical Slice · Spring Cloud Gateway · <b>MongoDB Atlas</b> (catálogo) · <b>Azure SQL Database</b> (pedido) · PostgreSQL (produção, estabelecimento) · RabbitMQ (CloudAMQP) · <b>Azure Functions</b> · Keycloak · Docker Hub · Azure Container Apps e Static Web Apps</td></tr>
+  <tr><td><b>Architecture Overview</b></td><td>Dois shells carregam remotes independentes; todo tráfego entra pelo API Gateway, que roteia para o BFF da experiência. O <code>bff-admin</code> agrega MS1, MS2 e a Azure Function. Cada microsserviço tem banco próprio; mudanças de estado são publicadas no RabbitMQ via Transactional Outbox e consumidas de forma idempotente.</td></tr>
+  <tr><td><b>Architecture Hypotheses</b></td><td>Assíncrono entre pedido e produção absorve picos · BFF por experiência evita payloads inúteis · Vertical Slice reduz o custo de novas funcionalidades · MongoDB acomoda modificadores heterogêneos · Azure SQL garante transação conjunta agregado + outbox.</td></tr>
+  <tr><td><b>Technical Challenges &amp; Risks</b></td><td>Consistência eventual · operação de 9 contêineres e 4 tipos de armazenamento · versionamento de contratos · SSE com reconexão · limites das camadas gratuitas (Azure SQL serverless pausa, CloudAMQP com poucas conexões).</td></tr>
+</table>
+
+<h2>3. C4 Nível 1 — Contexto (atualizado)</h2>
+<pre class="mermaid">
+flowchart TB
+  cliente(["Cliente da Mesa<br/>[Pessoa]<br/>lê o QR Code e faz o pedido"])
+  atendente(["Atendente de Salão<br/>[Pessoa]"])
+  cozinha(["Cozinheiro / Estação<br/>[Pessoa]"])
+  gerente(["Gerente / Administrador<br/>[Pessoa]"])
+  sistema["SmartKDS &amp; Menu<br/>[Sistema de Software]<br/>cardápio digital, comanda eletrônica,<br/>KDS e painel agregado, SaaS multi-tenant"]
+  kc["Keycloak<br/>[Sistema Externo]<br/>OAuth2 / OIDC"]
+  nuvem["Serviços gerenciados de nuvem<br/>[Sistemas Externos]<br/>MongoDB Atlas · Azure SQL · CloudAMQP · Azure Functions"]
+  cliente -- "consulta o cardápio, pede e acompanha<br/>[HTTPS + SSE]" --> sistema
+  atendente -- "abre, ajusta, cancela e fecha comandas<br/>[HTTPS]" --> sistema
+  cozinha -- "recebe tickets e faz o bump<br/>[HTTPS + SSE]" --> sistema
+  gerente -- "cardápio, mesas, estações, painel<br/>[HTTPS]" --> sistema
+  sistema -- "valida identidade, tenant e papéis<br/>[OIDC/JWKS]" --> kc
+  sistema -- "persiste dados, publica eventos e<br/>executa a Function [TLS]" --> nuvem
+</pre>
+<figcaption>Figura E3-1: C4 Nível 1, Diagrama de Contexto (substitui a Figura 1)</figcaption>
+<p>Mudanças em relação à Figura 1: o armazenamento de imagens em S3 e o envio de e-mail ficaram fora do escopo da Entrega 3
+(imagens são referenciadas por URL); os serviços gerenciados de nuvem passaram a ser explícitos.</p>
+
+<h2>4. C4 Nível 2 — Contêineres (atualizado)</h2>
+<pre class="mermaid">
+flowchart TB
+  subgraph Navegadores
+    SM["shell-mesa + mfe-comanda<br/>[React / Module Federation]"]
+    SO["shell-operacao + mfe-kds,<br/>mfe-cardapio, mfe-gestao<br/>[React / Module Federation]"]
+  end
+  CDN[("Azure Static Web Apps<br/>[CDN dos microfrontends]")]
+  GW["API Gateway<br/>[Spring Cloud Gateway]<br/>JWT, CORS, rate limit, roteamento"]
+  BM["bff-mesa<br/>[Node.js / Fastify]"]
+  BK["bff-kds<br/>[Node.js / Fastify]"]
+  BA["bff-admin<br/>[Node.js / Fastify]<br/>GET /aggregated-data"]
+  FN["status-operacional<br/>[Azure Function, HTTP Trigger]"]
+  CAT["catalogo-service — MS1<br/>[Spring Boot / Vertical Slice]"]
+  PED["pedido-service — MS2<br/>[Spring Boot / Vertical Slice]"]
+  PROD["producao-service<br/>[Spring Boot / Vertical Slice]"]
+  EST["estabelecimento-service<br/>[Spring Boot / Vertical Slice]"]
+  MQ{{"RabbitMQ<br/>[CloudAMQP]<br/>exchanges, filas e DLQ"}}
+  MONGO[("MongoDB Atlas<br/>smartkds_catalogo")]
+  SQL[("Azure SQL Database<br/>smartkds_pedido")]
+  PG1[("PostgreSQL<br/>smartkds_producao")]
+  PG2[("PostgreSQL<br/>smartkds_estabelecimento")]
+  KC["Keycloak [externo]"]
+  SM & SO -. "carrega bundles" .-> CDN
+  SM & SO -- "HTTPS/JSON + SSE" --> GW
+  SO -. "OIDC + PKCE" .-> KC
+  GW -. "JWKS" .-> KC
+  GW -- "/bff/mesa/**" --> BM
+  GW -- "/bff/kds/**" --> BK
+  GW -- "/bff/admin/**" --> BA
+  BA -- "HTTP" --> CAT & PED & PROD & EST
+  BA -- "HTTP" --> FN
+  BM -- "HTTP" --> CAT & PED & EST
+  BK -- "HTTP" --> PROD & EST
+  CAT --> MONGO
+  PED --> SQL
+  PROD --> PG1
+  EST --> PG2
+  PED -- "outbox: publica / consome" --> MQ
+  PROD -- "outbox: publica / consome" --> MQ
+  PROD -- "lê roteamento (cache)" --> EST
+  MQ -- "eventos para SSE" --> BM & BK
+</pre>
+<figcaption>Figura E3-2: C4 Nível 2, Diagrama de Contêineres (substitui a Figura 2)</figcaption>
+<table>
+  <tr><th>Contêiner</th><th>Tecnologia</th><th>Implantação</th><th>Imagem / artefato</th></tr>
+  <tr><td>Microfrontends (6)</td><td>React 18, Vite, Module Federation</td><td>Azure Static Web Apps</td><td>bundles estáticos</td></tr>
+  <tr><td>API Gateway</td><td>Spring Cloud Gateway</td><td>Azure Container Apps (ingresso externo)</td><td><code>smartkds-api-gateway</code></td></tr>
+  <tr><td>bff-mesa, bff-kds, bff-admin</td><td>Node.js 22, Fastify</td><td>Container Apps (ingresso interno)</td><td><code>smartkds-bff-*</code></td></tr>
+  <tr><td>catalogo-service (MS1)</td><td>Spring Boot 3.5</td><td>Container Apps (interno) + MongoDB Atlas M0</td><td><code>smartkds-catalogo-service</code></td></tr>
+  <tr><td>pedido-service (MS2)</td><td>Spring Boot 3.5</td><td>Container Apps (interno) + Azure SQL Database</td><td><code>smartkds-pedido-service</code></td></tr>
+  <tr><td>producao-service, estabelecimento-service</td><td>Spring Boot 3.5</td><td>Container Apps (interno) + PostgreSQL</td><td><code>smartkds-producao-service</code>, <code>smartkds-estabelecimento-service</code></td></tr>
+  <tr><td>status-operacional</td><td>Azure Functions v4 (Node 20)</td><td>Azure Functions (Consumption)</td><td>pacote da function (e <code>smartkds-status-operacional-function</code>)</td></tr>
+  <tr><td>Broker de eventos</td><td>RabbitMQ 3.13</td><td>CloudAMQP</td><td>serviço gerenciado</td></tr>
+</table>
+
+<h2>5. C4 Nível 3 — Componentes (atualizado)</h2>
+<h3>5.1 bff-admin: agregação e proxy CRUD</h3>
+<pre class="mermaid">
+flowchart LR
+  GW["API Gateway"] --> R1["rotas/agregacao.routes<br/>GET /aggregated-data"]
+  GW --> R2["rotas/administracao.routes<br/>proxy CRUD: cardápio, comandas,<br/>mesas, estações, roteamento"]
+  GW --> DOC["docs/<br/>OpenAPI /docs · AsyncAPI /eventos"]
+  R1 --> C["composicao/DadosAgregadosComposicao<br/>Promise.all + situação por fonte"]
+  C --> CL1["clientes/CatalogoClient"]
+  C --> CL2["clientes/PedidoClient"]
+  C --> CL3["clientes/StatusOperacionalClient"]
+  C --> CL4["clientes/ProducaoClient"]
+  R2 --> CL1 & CL2 & CL5["clientes/EstabelecimentoClient"] & CL4
+  CL1 & CL2 & CL4 & CL5 --> RES["clientes/ClienteHttpResiliente<br/>timeout, retry em GET, circuit breaker"]
+  RES --> MS1["catalogo-service (MS1)"] & MS2["pedido-service (MS2)"] & P["producao-service"] & E["estabelecimento-service"]
+  CL3 --> FN["Azure Function"]
+</pre>
+<figcaption>Figura E3-3: C4 Nível 3, Componentes do bff-admin</figcaption>
+
+<h3>5.2 pedido-service (MS2): fatias verticais sobre o Azure SQL</h3>
+<pre class="mermaid">
+flowchart TB
+  BFF["bff-mesa / bff-admin"] --> F1 & F2 & F3 & F4 & F5 & F6 & F7 & F8 & F9
+  subgraph features["features (Application + API)"]
+    F1["abrircomanda"]
+    F2["adicionaritem"]
+    F3["alteraritemdacomanda"]
+    F4["confirmarpedido"]
+    F5["cancelaritem"]
+    F6["cancelarcomanda"]
+    F7["consultarcomanda"]
+    F8["fecharcomanda"]
+    F9["consultarauditoria"]
+    L1["registrarentregadopedido<br/>(Listener)"]
+    L2["registrarprogressodaproducao<br/>(Listener)"]
+    L3["registrareventorejeitado<br/>(DLQ)"]
+  end
+  subgraph shared["shared"]
+    D["dominio (Domain)<br/>Comanda, ItemComanda, Dinheiro,<br/>PoliticaCancelamento — Java puro"]
+    PER["persistencia (Infrastructure)<br/>ComandaRepository → JPA"]
+    OUT["outbox<br/>PublicadorDeEventos, OutboxRelay"]
+    INB["inbox<br/>EventoProcessadoRepository"]
+    INT["integracao<br/>CatalogoGateway → HTTP"]
+    TEN["tenancy<br/>FiltroDeTenant, DataSourceComTenant"]
+  end
+  features --> D & PER
+  F4 & F5 & F6 & F8 --> OUT
+  L1 & L2 --> INB
+  F2 & F1 --> INT
+  PER & OUT & INB --> SQL[("Azure SQL<br/>RLS por SESSION_CONTEXT")]
+  TEN --> SQL
+  OUT --> MQ{{"RabbitMQ smartkds.pedidos"}}
+  MQ2{{"RabbitMQ smartkds.producao"}} --> L1 & L2
+</pre>
+<figcaption>Figura E3-4: C4 Nível 3, Componentes do pedido-service (substitui a Figura 3)</figcaption>
+
+<h3>5.3 catalogo-service (MS1): fatias verticais sobre o MongoDB Atlas</h3>
+<pre class="mermaid">
+flowchart LR
+  BFF["bff-admin / bff-mesa / pedido-service"] --> A["cadastraritem · listaritens · obteritem<br/>atualizaritem · alterardisponibilidade · removeritem"]
+  BFF --> B["publicarversaocardapio · consultarcardapioativo<br/>consultarversaocardapio"]
+  A & B --> D["shared/dominio<br/>ItemCardapio, VersaoCardapio (imutável),<br/>GrupoModificador"]
+  A & B --> P["shared/persistencia<br/>ItemCardapioRepository, VersaoCardapioRepository"]
+  P --> M[("MongoDB Atlas<br/>itens · versoes_cardapio · cardapio_ativo")]
+</pre>
+<figcaption>Figura E3-5: C4 Nível 3, Componentes do catalogo-service</figcaption>
+
+<h2>6. Alterações nas seções do arc42</h2>
+<h3>6.1 Seção 4.3 — bancos por serviço</h3>
+<table>
+  <tr><th>Serviço</th><th>Banco</th><th>Justificativa</th></tr>
+  <tr><td>catalogo-service (MS1)</td><td>MongoDB Atlas (M0)</td><td>Documentos heterogêneos (modificadores) lidos inteiros; versão do cardápio como documento fechado.</td></tr>
+  <tr><td>pedido-service (MS2)</td><td><b>Azure SQL Database</b></td><td>Invariantes transacionais fortes e transação conjunta agregado + outbox; RLS nativo (<code>SECURITY POLICY</code>); índice filtrado para "uma comanda aberta por mesa"; <code>READPAST</code> para o relay. Migrações para PostgreSQL mantidas como alternativa.</td></tr>
+  <tr><td>producao-service</td><td>PostgreSQL</td><td>Consultas agregadas por estação e janela temporal (indicadores).</td></tr>
+  <tr><td>estabelecimento-service</td><td>PostgreSQL</td><td>Configuração pequena, relacional e muito consultada.</td></tr>
+</table>
+
+<h3>6.2 Seção 8.1.1 — DER do pedido-service no Azure SQL</h3>
+<table>
+  <tr><th>Tipo lógico</th><th>PostgreSQL (Entrega 2)</th><th>Azure SQL (Entrega 3)</th></tr>
+  <tr><td>Identificadores</td><td><code>UUID</code></td><td><code>UNIQUEIDENTIFIER</code></td></tr>
+  <tr><td>Instantes</td><td><code>TIMESTAMPTZ</code></td><td><code>DATETIMEOFFSET(6)</code></td></tr>
+  <tr><td>Payload e detalhe JSON</td><td><code>JSONB</code></td><td><code>NVARCHAR(MAX)</code> + <code>CHECK (ISJSON(...) = 1)</code></td></tr>
+  <tr><td>Uma comanda aberta por mesa</td><td>índice único parcial</td><td>índice único filtrado <code>WHERE status = 'ABERTA'</code></td></tr>
+  <tr><td>Row Level Security</td><td><code>POLICY</code> + <code>current_setting('app.tenant_id')</code></td><td><code>SECURITY POLICY</code> + <code>SESSION_CONTEXT(N'tenant_id')</code></td></tr>
+  <tr><td>Trava do relay da outbox</td><td><code>FOR UPDATE SKIP LOCKED</code></td><td><code>WITH (UPDLOCK, ROWLOCK, READPAST)</code> (mesma consulta JPA)</td></tr>
+</table>
+
+<h3>6.3 Seção 7 — Implantação na nuvem</h3>
+<pre class="mermaid">
+flowchart TB
+  subgraph Azure["Microsoft Azure (Azure for Students)"]
+    SWA["Static Web Apps<br/>6 microfrontends"]
+    subgraph CAE["Container Apps Environment"]
+      G["api-gateway<br/>(ingresso externo)"]
+      B["bff-mesa · bff-kds · bff-admin<br/>(internos)"]
+      S["catalogo · pedido · producao · estabelecimento<br/>(internos, escala a zero)"]
+    end
+    F["Azure Functions<br/>status-operacional"]
+    SQLDB[("Azure SQL Database")]
+  end
+  ATLAS[("MongoDB Atlas M0")]
+  PG[("PostgreSQL<br/>(Flexible B1ms ou Neon)")]
+  AMQP{{"CloudAMQP"}}
+  HUB["Docker Hub<br/>imagens smartkds-*"]
+  GH["GitHub Actions<br/>CI + CD"]
+  GH --> HUB --> CAE
+  G --> B --> S
+  B --> F
+  S --> SQLDB & ATLAS & PG & AMQP
+  B --> AMQP
+</pre>
+<figcaption>Figura E3-6: Implantação da Entrega 3</figcaption>
+
+<h3>6.4 Decisões arquiteturais novas</h3>
+<table>
+  <tr><th>ADR</th><th>Decisão</th><th>Motivo e consequência</th></tr>
+  <tr><td>ADR-13</td><td>pedido-service no <b>Azure SQL Database</b>, com migrações por fornecedor (<code>db/migration/{vendor}</code>)</td><td>Exigência da entrega e transação local agregado + outbox. A mesma camada JPA roda em Azure SQL e PostgreSQL; testes de contrato executam nos dois bancos (PostgreSQL embutido e SQL Server via Testcontainers).</td></tr>
+  <tr><td>ADR-14</td><td><b>Azure Function</b> <code>status-operacional</code> (HTTP Trigger) para enriquecimento</td><td>Cálculo sem estado (faixa horária, pico, multiplicador) fora dos serviços de domínio; custo zero em repouso. A regra é pura e testada sem o SDK.</td></tr>
+  <tr><td>ADR-15</td><td><code>GET /aggregated-data</code> no <b>bff-admin</b></td><td>A agregação é composição de tela (papel do BFF, ADR-03). Chamadas em paralelo com circuit breaker; uma fonte fora não derruba a resposta.</td></tr>
+  <tr><td>ADR-16</td><td>Swagger dos microsserviços publicado pelo gateway em <code>/docs/&lt;serviço&gt;/**</code></td><td>Contrato público sem expor <code>/interno/**</code> ao navegador; o gateway calcula <code>X-Forwarded-Prefix</code> (trusted proxies).</td></tr>
+  <tr><td>ADR-17</td><td>Repositório por componente + repositório guarda-chuva</td><td>Atende "um repositório público por projeto" e preserva o deploy independente; o guarda-chuva mantém compose, infra e documentação.</td></tr>
+  <tr><td>ADR-18</td><td>CRUD completo da comanda: alterar item do carrinho e cancelar comanda (exclusão lógica)</td><td>Cancelar comanda com itens já na cozinha gera <code>ItemCancelado</code> para cada um (mesma saga da Figura 19); recusado se algo já estiver em produção.</td></tr>
+</table>
+
+<h3>6.5 Outros ajustes da implementação</h3>
+<table>
+  <tr><th>Tema</th><th>Documento anterior</th><th>Implementado</th></tr>
+  <tr><td>Composição dos handlers</td><td><code>HandlerConfig</code> com handlers package-private</td><td>Handlers anotados com <code>@Component</code> (continuam package-private)</td></tr>
+  <tr><td>Ponteiro da versão ativa</td><td>no estabelecimento e no catálogo</td><td>somente no catálogo (<code>cardapio_ativo</code>)</td></tr>
+  <tr><td>Roteamento por categoria</td><td>evento sem categoria</td><td><code>PedidoConfirmado</code> carrega <code>itemCardapioId</code> e <code>categoria</code></td></tr>
+  <tr><td>Filas</td><td>uma fila por serviço</td><td>uma fila por tipo de evento consumido; filas de SSE exclusivas por réplica</td></tr>
+  <tr><td>Rate limit</td><td>Redis</td><td>token bucket em memória por réplica (Redis como evolução)</td></tr>
+  <tr><td>Token no SSE</td><td>—</td><td><code>?access_token=</code> aceito apenas pelo gateway</td></tr>
+  <tr><td>Integrantes</td><td>tabela com 2</td><td>4 integrantes, como na capa</td></tr>
+</table>
+
+<h3>6.6 Testes (Seção 8.8.6)</h3>
+<table>
+  <tr><th>Projeto</th><th>Testes</th><th>Tipos</th></tr>
+  <tr><td>catalogo-service</td><td>19</td><td>domínio, fatia, 13 regras ArchUnit</td></tr>
+  <tr><td>pedido-service</td><td>52</td><td>domínio (CRUD da comanda), fatias, 18 regras ArchUnit, integração PostgreSQL e Azure SQL (Testcontainers), trava concorrente da outbox</td></tr>
+  <tr><td>producao-service</td><td>28</td><td>domínio, roteamento, idempotência, ArchUnit, integração (indicadores e RLS)</td></tr>
+  <tr><td>estabelecimento-service</td><td>20</td><td>domínio, ArchUnit, integração</td></tr>
+  <tr><td>api-gateway</td><td>7</td><td>filtros de borda, rate limit, ArchUnit</td></tr>
+  <tr><td>BFFs</td><td>35</td><td>composição, rotas, circuit breaker, SSE, <code>/aggregated-data</code>, arquitetura</td></tr>
+  <tr><td>Azure Function</td><td>6</td><td>regra pura e arquitetura</td></tr>
+  <tr><td>Microfrontends</td><td>28</td><td>componentes, regras de UI e arquitetura</td></tr>
+</table>
+
+<h2>7. Prints</h2>
+<p class="nota">Capture com as URLs <b>publicadas</b> (barra de endereço visível) e cole cada imagem no quadro correspondente
+antes de gerar o PDF.</p>
+<div class="print"><b>7.1 Swagger do BFF</b> — <code>https://&lt;gateway&gt;/bff/admin/docs</code> com a operação <code>GET /aggregated-data</code> expandida e executada (Try it out).</div>
+<div class="print"><b>7.2 Swagger do Microsserviço 1 (MongoDB)</b> — <code>https://&lt;gateway&gt;/docs/catalogo/swagger-ui.html</code> mostrando o CRUD de itens.</div>
+<div class="print"><b>7.3 Swagger do Microsserviço 2 (Azure SQL)</b> — <code>https://&lt;gateway&gt;/docs/pedido/swagger-ui.html</code> mostrando POST, GET, PATCH e DELETE de comandas.</div>
+<div class="print"><b>7.4 Swagger dos eventos</b> — <code>https://&lt;gateway&gt;/bff/admin/eventos</code> (AsyncAPI) com <code>PedidoConfirmado</code> aberto.</div>
+<div class="print"><b>7.5 Frontend — cliente</b> — <code>https://&lt;swa-shell-mesa&gt;/m/demo-mesa-1</code> no celular com o carrinho e o status "Em preparo".</div>
+<div class="print"><b>7.6 Frontend — cozinha (KDS)</b> — shell de operação, estação Grill, ticket com destaque de atraso.</div>
+<div class="print"><b>7.7 Frontend — painel do gerente</b> — aba Gestão → Painel, com as quatro fontes do <code>/aggregated-data</code> "ok".</div>
+<div class="print"><b>7.8 API Gateway</b> — resposta JSON de <code>https://&lt;gateway&gt;/bff/admin/aggregated-data</code> no navegador e a tela do Container App <code>api-gateway</code> (ingresso externo) no portal do Azure.</div>
+<div class="print"><b>7.9 Docker Hub e GitHub</b> — lista de imagens <code>smartkds-*</code> com a tag <code>v1</code> e a execução verde do GitHub Actions.</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', flowchart: { htmlLabels: true, curve: 'basis' } });</script>
+</body>
+</html>

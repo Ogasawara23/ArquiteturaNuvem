@@ -1,0 +1,9 @@
+.shell-topo {
+  position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  padding: 8px 18px; background: var(--cor-superficie); border-bottom: 1px solid var(--cor-borda);
+}
+.shell-topo nav { display: flex; gap: 2px; flex-wrap: wrap; flex: 1; }
+.marca { color: var(--cor-primaria); font-size: 1.15em; letter-spacing: 0.02em; }
+.usuario { font-size: 0.85em; }
+.shell-conteudo { padding: 18px; max-width: 1400px; margin: 0 auto; }
+.entrada { max-width: 480px; margin: 10vh auto; }

@@ -1,0 +1,22 @@
+name: ci-services
+# Build, testes unitarios de dominio e de fatia, testes de integracao (PostgreSQL embutido)
+# e testes de arquitetura ArchUnit. Violacao de regra de arquitetura falha o build (Secao 7.2).
+on:
+  push:
+    paths: ['services/**', 'gateway/**', '.github/workflows/ci-services.yml']
+  pull_request:
+    paths: ['services/**', 'gateway/**']
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        projeto: [services/catalogo-service, services/pedido-service, services/producao-service, services/estabelecimento-service, gateway/api-gateway]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21', cache: maven }
+      - name: mvn verify (inclui ArchUnit)
+        run: mvn -B -ntp verify
+        working-directory: ${{ matrix.projeto }}

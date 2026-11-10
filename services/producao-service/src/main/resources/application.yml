@@ -1,0 +1,49 @@
+server:
+  # respeita X-Forwarded-Prefix do API Gateway (Swagger em /docs/<servico>/swagger-ui.html)
+  forward-headers-strategy: framework
+  port: ${PORT:8083}
+spring:
+  application:
+    name: producao-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/smartkds_producao}
+    username: ${DB_USER:producao}
+    password: ${DB_PASSWORD:producao}
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+  rabbitmq:
+    addresses: ${RABBITMQ_URL:amqp://guest:guest@localhost:5672}
+    publisher-confirm-type: simple
+    listener:
+      simple:
+        prefetch: 20
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 5
+          initial-interval: 500ms
+          multiplier: 2
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+smartkds:
+  estabelecimento-url: ${ESTABELECIMENTO_URL:http://localhost:8084}
+  roteamento:
+    cache-minutos: 5
+  outbox:
+    exchange: smartkds.producao
+    intervalo-ms: 200
+    lote: 50

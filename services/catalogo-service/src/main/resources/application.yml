@@ -1,0 +1,22 @@
+server:
+  # respeita X-Forwarded-Prefix do API Gateway (Swagger em /docs/<servico>/swagger-ui.html)
+  forward-headers-strategy: framework
+  port: ${PORT:8081}
+spring:
+  application:
+    name: catalogo-service
+  data:
+    mongodb:
+      # MongoDB Atlas (Free Tier): mongodb+srv://<usuario>:<senha>@<cluster>.mongodb.net/smartkds_catalogo
+      uri: ${MONGODB_URI:mongodb://localhost:27017/smartkds_catalogo}
+      auto-index-creation: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

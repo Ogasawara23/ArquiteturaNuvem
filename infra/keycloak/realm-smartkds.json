@@ -1,0 +1,60 @@
+{
+  "realm": "smartkds",
+  "enabled": true,
+  "displayName": "SmartKDS & Menu",
+  "accessTokenLifespan": 1800,
+  "sslRequired": "external",
+  "roles": {
+    "realm": [
+      { "name": "GERENTE", "description": "Gerente do estabelecimento" },
+      { "name": "COZINHA", "description": "Cozinheiro / estacao (KDS)" },
+      { "name": "ATENDENTE", "description": "Atendente de salao" },
+      { "name": "ADMIN", "description": "Administrador da plataforma SaaS" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "shell-operacao",
+      "name": "Shell de Operacao (SPA)",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:5200/*", "https://*/*"],
+      "webOrigins": ["+"],
+      "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "+" },
+      "protocolMappers": [
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "gerente", "enabled": true, "firstName": "Gerente", "lastName": "Demo", "email": "gerente@demo.local",
+      "emailVerified": true, "attributes": { "tenant_id": ["demo"] }, "realmRoles": ["GERENTE"],
+      "credentials": [{ "type": "password", "value": "gerente", "temporary": false }]
+    },
+    {
+      "username": "cozinha", "enabled": true, "firstName": "Cozinha", "lastName": "Demo", "email": "cozinha@demo.local",
+      "emailVerified": true, "attributes": { "tenant_id": ["demo"] }, "realmRoles": ["COZINHA"],
+      "credentials": [{ "type": "password", "value": "cozinha", "temporary": false }]
+    },
+    {
+      "username": "atendente", "enabled": true, "firstName": "Atendente", "lastName": "Demo", "email": "atendente@demo.local",
+      "emailVerified": true, "attributes": { "tenant_id": ["demo"] }, "realmRoles": ["ATENDENTE"],
+      "credentials": [{ "type": "password", "value": "atendente", "temporary": false }]
+    }
+  ],
+  "attributes": { "userProfileEnabled": "false" }
+}

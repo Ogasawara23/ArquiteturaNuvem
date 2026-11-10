@@ -1,0 +1,235 @@
+asyncapi: 3.0.0
+info:
+  title: SmartKDS & Menu - Eventos de Dominio
+  version: 1.0.0
+  description: |
+    Contrato das mensagens assincronas trocadas pelo RabbitMQ (Secao 8.4 do arc42).
+    Todas as mensagens sao publicadas via Transactional Outbox, com entrega ao menos uma vez:
+    todo consumidor e idempotente pelo `eventoId` (igual ao `messageId` AMQP).
+    Propriedades AMQP: messageId = eventoId, type = tipo do evento, contentType = application/json,
+    cabecalhos `tenant_id` e `traceparent` (W3C Trace Context).
+    Evolucao: campos novos sao ignorados pelos consumidores; mudanca incompativel cria
+    `versaoDoContrato: 2` com nova chave de roteamento, em paralelo durante a transicao.
+servers:
+  rabbitmq:
+    host: rabbitmq:5672
+    protocol: amqp
+    description: RabbitMQ 3.13 (CloudAMQP em nuvem). Uma dead letter queue por fila de consumo (exchange smartkds.dlx).
+channels:
+  pedidoConfirmado:
+    address: pedido.confirmado
+    description: Exchange topic smartkds.pedidos. Consumido por producao-service (gerartickets) e bff-mesa.
+    messages:
+      PedidoConfirmado:
+        $ref: '#/components/messages/PedidoConfirmado'
+    bindings:
+      amqp:
+        is: routingKey
+        exchange: { name: smartkds.pedidos, type: topic, durable: true }
+  itemCancelado:
+    address: pedido.item.cancelado
+    description: Exchange smartkds.pedidos. Consumido por producao-service (cancelarticketsdoitem), bff-kds e bff-mesa.
+    messages:
+      ItemCancelado:
+        $ref: '#/components/messages/ItemCancelado'
+    bindings:
+      amqp:
+        is: routingKey
+        exchange: { name: smartkds.pedidos, type: topic, durable: true }
+  comandaFechada:
+    address: comanda.fechada
+    description: Exchange smartkds.pedidos. Consumido por bff-mesa (encerra o acompanhamento).
+    messages:
+      ComandaFechada:
+        $ref: '#/components/messages/ComandaFechada'
+    bindings:
+      amqp:
+        is: routingKey
+        exchange: { name: smartkds.pedidos, type: topic, durable: true }
+  ticketCriado:
+    address: ticket.criado
+    description: Exchange smartkds.producao. Consumido por bff-kds (insere o cartao na tela da estacao).
+    messages:
+      TicketCriado:
+        $ref: '#/components/messages/TicketCriado'
+    bindings:
+      amqp:
+        is: routingKey
+        exchange: { name: smartkds.producao, type: topic, durable: true }
+  ticketStatusAlterado:
+    address: ticket.status
+    description: Exchange smartkds.producao. Consumido por pedido-service (registrarprogressodaproducao), bff-kds e bff-mesa.
+    messages:
+      TicketStatusAlterado:
+        $ref: '#/components/messages/TicketStatusAlterado'
+    bindings:
+      amqp:
+        is: routingKey
+        exchange: { name: smartkds.producao, type: topic, durable: true }
+  ticketExpedido:
+    address: ticket.expedido
+    description: Exchange smartkds.producao. Consumido por pedido-service (registrarentregadopedido), bff-kds e bff-mesa.
+    messages:
+      TicketExpedido:
+        $ref: '#/components/messages/TicketExpedido'
+    bindings:
+      amqp:
+        is: routingKey
+        exchange: { name: smartkds.producao, type: topic, durable: true }
+operations:
+  publicarPedidoConfirmado:
+    action: send
+    channel: { $ref: '#/channels/pedidoConfirmado' }
+    summary: pedido-service / confirmarpedido (via outbox)
+  publicarItemCancelado:
+    action: send
+    channel: { $ref: '#/channels/itemCancelado' }
+    summary: pedido-service / cancelaritem (via outbox)
+  publicarComandaFechada:
+    action: send
+    channel: { $ref: '#/channels/comandaFechada' }
+    summary: pedido-service / fecharcomanda (via outbox)
+  publicarTicketCriado:
+    action: send
+    channel: { $ref: '#/channels/ticketCriado' }
+    summary: producao-service / gerartickets (via outbox)
+  publicarTicketStatusAlterado:
+    action: send
+    channel: { $ref: '#/channels/ticketStatusAlterado' }
+    summary: producao-service / avancarstatusticket e cancelarticketsdoitem (via outbox)
+  publicarTicketExpedido:
+    action: send
+    channel: { $ref: '#/channels/ticketExpedido' }
+    summary: producao-service / expedirticket (via outbox)
+  gerarTickets:
+    action: receive
+    channel: { $ref: '#/channels/pedidoConfirmado' }
+    summary: producao-service, fila producao.pedidos (DLQ producao.pedidos.dlq)
+  compensarTicket:
+    action: receive
+    channel: { $ref: '#/channels/itemCancelado' }
+    summary: producao-service, fila producao.cancelamentos (DLQ producao.cancelamentos.dlq)
+  registrarEntrega:
+    action: receive
+    channel: { $ref: '#/channels/ticketExpedido' }
+    summary: pedido-service, fila pedido.producao (DLQ pedido.producao.dlq)
+  registrarProgresso:
+    action: receive
+    channel: { $ref: '#/channels/ticketStatusAlterado' }
+    summary: pedido-service, fila pedido.producao.status (DLQ pedido.producao.status.dlq)
+components:
+  schemas:
+    Cabecalho:
+      type: object
+      required: [eventoId, tipo, versaoDoContrato, tenantId, ocorridoEm]
+      properties:
+        eventoId: { type: string, format: uuid }
+        tipo: { type: string }
+        versaoDoContrato: { type: integer, const: 1 }
+        tenantId: { type: string, examples: [demo] }
+        ocorridoEm: { type: string, format: date-time }
+  messages:
+    PedidoConfirmado:
+      name: PedidoConfirmado
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Cabecalho'
+          - type: object
+            required: [comandaId, mesaId, itens]
+            properties:
+              comandaId: { type: string, format: uuid }
+              mesaId: { type: string }
+              mesaRotulo: { type: string, examples: [Mesa 12] }
+              chaveIdempotencia: { type: string }
+              versaoCardapioId: { type: string }
+              itens:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    itemComandaId: { type: string, format: uuid }
+                    itemCardapioId: { type: string }
+                    categoria: { type: string }
+                    descricao: { type: string, examples: [Hamburguer Artesanal 180g] }
+                    quantidade: { type: integer }
+                    modificadores: { type: array, items: { type: string } }
+                    observacao: { type: string }
+                    estacaoSugerida: { type: string, examples: [grill] }
+                    tempoAlvoPreparoSegundos: { type: integer, examples: [720] }
+    ItemCancelado:
+      name: ItemCancelado
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Cabecalho'
+          - type: object
+            properties:
+              comandaId: { type: string, format: uuid }
+              itemComandaId: { type: string, format: uuid }
+              motivo: { type: string }
+    ComandaFechada:
+      name: ComandaFechada
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Cabecalho'
+          - type: object
+            properties:
+              comandaId: { type: string, format: uuid }
+              mesaId: { type: string }
+              mesaRotulo: { type: string }
+              subtotalCentavos: { type: integer }
+              taxaServicoCentavos: { type: integer }
+              totalCentavos: { type: integer }
+              quantidadeDeItens: { type: integer }
+    TicketCriado:
+      name: TicketCriado
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Cabecalho'
+          - type: object
+            properties:
+              ticketId: { type: string, format: uuid }
+              comandaId: { type: string, format: uuid }
+              mesaRotulo: { type: string }
+              estacaoId: { type: string }
+              status: { type: string, const: RECEBIDO }
+              tempoAlvoSegundos: { type: integer }
+              criadoEm: { type: string, format: date-time }
+              itens:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    itemComandaId: { type: string, format: uuid }
+                    descricao: { type: string }
+                    quantidade: { type: integer }
+                    modificadores: { type: array, items: { type: string } }
+                    observacao: { type: string }
+    TicketStatusAlterado:
+      name: TicketStatusAlterado
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Cabecalho'
+          - type: object
+            properties:
+              ticketId: { type: string, format: uuid }
+              comandaId: { type: string, format: uuid }
+              estacaoId: { type: string }
+              status: { type: string, enum: [EM_PREPARO, PRONTO, CANCELADO, RECEBIDO] }
+              itemComandaIds: { type: array, items: { type: string, format: uuid } }
+    TicketExpedido:
+      name: TicketExpedido
+      contentType: application/json
+      payload:
+        allOf:
+          - $ref: '#/components/schemas/Cabecalho'
+          - type: object
+            properties:
+              ticketId: { type: string, format: uuid }
+              comandaId: { type: string, format: uuid }
+              estacaoId: { type: string }
+              itemComandaIds: { type: array, items: { type: string, format: uuid } }

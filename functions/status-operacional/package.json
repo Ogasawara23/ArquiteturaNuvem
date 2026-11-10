@@ -1,0 +1,25 @@
+{
+  "name": "smartkds-status-operacional",
+  "version": "1.0.0",
+  "description": "SmartKDS & Menu - Azure Function (HTTP Trigger) que calcula o status operacional do restaurante: faixa horaria, pico e multiplicador de tempo de preparo",
+  "main": "dist/src/functions/*.js",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "start": "func start",
+    "prestart": "npm run build",
+    "test": "vitest run",
+    "publicar": "npm run build && func azure functionapp publish $AZURE_FUNCTIONAPP_NAME"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
+  }
+}

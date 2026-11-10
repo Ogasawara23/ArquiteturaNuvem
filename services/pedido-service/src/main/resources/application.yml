@@ -1,0 +1,51 @@
+server:
+  # respeita X-Forwarded-Prefix do API Gateway (Swagger em /docs/<servico>/swagger-ui.html)
+  forward-headers-strategy: framework
+  port: ${PORT:8082}
+spring:
+  application:
+    name: pedido-service
+  datasource:
+    # Azure SQL: jdbc:sqlserver://<servidor>.database.windows.net:1433;databaseName=smartkds_pedido;encrypt=true;trustServerCertificate=false;loginTimeout=30
+    # (PostgreSQL tambem e suportado: jdbc:postgresql://host:5432/smartkds_pedido)
+    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=smartkds_pedido;encrypt=false}
+    username: ${DB_USER:sa}
+    password: ${DB_PASSWORD:SmartKds!2026}
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+    # migracoes por fornecedor: db/migration/sqlserver (Azure SQL) ou db/migration/postgresql
+    locations: classpath:db/migration/{vendor}
+  rabbitmq:
+    # CloudAMQP (free tier): amqps://<usuario>:<senha>@<host>/<vhost>
+    addresses: ${RABBITMQ_URL:amqp://guest:guest@localhost:5672}
+    publisher-confirm-type: simple
+    listener:
+      simple:
+        prefetch: 20
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 5
+          initial-interval: 500ms
+          multiplier: 2
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+smartkds:
+  catalogo-url: ${CATALOGO_URL:http://localhost:8081}
+  outbox:
+    intervalo-ms: 200
+    lote: 50

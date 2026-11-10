@@ -1,0 +1,95 @@
+server:
+  port: ${PORT:8080}
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          # Gera X-Forwarded-Host/Proto/Prefix para os servicos (necessario ao Swagger atras do gateway).
+          # O limitador de taxa usa o endereco remoto real, nunca X-Forwarded-For.
+          trusted-proxies: ${TRUSTED_PROXIES:.*}
+          # Uma rota por BFF (Secao 7.2). StripPrefix=2: /bff/kds/estacoes/grill/tickets -> /estacoes/grill/tickets
+          routes:
+            - id: bff-mesa
+              uri: ${BFF_MESA_URL:http://localhost:3001}
+              predicates:
+                - Path=/bff/mesa/**
+              filters:
+                - StripPrefix=2
+            - id: bff-kds
+              uri: ${BFF_KDS_URL:http://localhost:3002}
+              predicates:
+                - Path=/bff/kds/**
+              filters:
+                - StripPrefix=2
+            - id: bff-admin
+              uri: ${BFF_ADMIN_URL:http://localhost:3003}
+              predicates:
+                - Path=/bff/admin/**
+              filters:
+                - StripPrefix=2
+            # Somente documentacao (Swagger) dos microsservicos: as rotas /interno/** continuam
+            # inacessiveis ao navegador, mas o contrato fica publico para a entrega.
+            - id: docs-catalogo
+              uri: ${CATALOGO_URL:http://localhost:8081}
+              predicates:
+                - Path=/docs/catalogo/swagger-ui.html,/docs/catalogo/swagger-ui/**,/docs/catalogo/v3/api-docs/**
+              filters:
+                - StripPrefix=2
+            - id: docs-pedido
+              uri: ${PEDIDO_URL:http://localhost:8082}
+              predicates:
+                - Path=/docs/pedido/swagger-ui.html,/docs/pedido/swagger-ui/**,/docs/pedido/v3/api-docs/**
+              filters:
+                - StripPrefix=2
+            - id: docs-producao
+              uri: ${PRODUCAO_URL:http://localhost:8083}
+              predicates:
+                - Path=/docs/producao/swagger-ui.html,/docs/producao/swagger-ui/**,/docs/producao/v3/api-docs/**
+              filters:
+                - StripPrefix=2
+            - id: docs-estabelecimento
+              uri: ${ESTABELECIMENTO_URL:http://localhost:8084}
+              predicates:
+                - Path=/docs/estabelecimento/swagger-ui.html,/docs/estabelecimento/swagger-ui/**,/docs/estabelecimento/v3/api-docs/**
+              filters:
+                - StripPrefix=2
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origin-patterns: ${CORS_ORIGINS:*}
+                allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+                allowed-headers: "*"
+                exposed-headers: X-Correlation-Id
+                max-age: 3600
+          httpclient:
+            connect-timeout: 3000
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Emissor esperado na claim "iss" (como o navegador enxerga o Keycloak)
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/smartkds}
+          # Chaves publicas (JWKS) obtidas pela rede interna; dispensa a descoberta no issuer-uri
+          jwk-set-uri: ${KEYCLOAK_JWKS_URI:http://localhost:8180/realms/smartkds/protocol/openid-connect/certs}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+smartkds:
+  seguranca:
+    # true: exige JWT do Keycloak em /bff/kds/** e /bff/admin/** e usa a claim tenant_id.
+    # false (modo demonstracao): aceita o cabecalho X-Tenant-Id ou usa o tenant de demonstracao.
+    jwt-habilitado: ${JWT_HABILITADO:false}
+    tenant-demonstracao: ${TENANT_DEMO:demo}
+  limite:
+    # rate limit por tenant (rotas autenticadas) e por IP (rotas publicas de mesa)
+    requisicoes-por-segundo-tenant: ${LIMITE_TENANT_RPS:50}
+    rajada-tenant: ${LIMITE_TENANT_RAJADA:100}
+    requisicoes-por-segundo-mesa: ${LIMITE_MESA_RPS:10}
+    rajada-mesa: ${LIMITE_MESA_RAJADA:30}

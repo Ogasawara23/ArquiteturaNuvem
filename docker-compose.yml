@@ -1,0 +1,199 @@
+# SmartKDS & Menu - ambiente completo local (Secao 7.2).
+#   docker compose up -d --build                       -> backend + gateway + BFFs + function + frontends (modo demonstracao)
+#   docker compose --profile keycloak up -d --build    -> idem, com Keycloak (defina JWT_HABILITADO=true no gateway)
+# Depois: ./scripts/popular-demo.sh   e abra http://localhost:5200 (operacao) e http://localhost:5100/m/demo-mesa-1 (mesa)
+
+x-java: &java
+  restart: unless-stopped
+  environment: &java-env
+    JAVA_OPTS: "-XX:MaxRAMPercentage=70"
+    RABBITMQ_URL: amqp://smartkds:smartkds@rabbitmq:5672
+
+services:
+  # ---------------------------------------------------------------- infraestrutura
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - dados-postgres:/var/lib/postgresql/data
+    ports: ["5432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 20
+
+  # Motor do Azure SQL Database para o pedido-service (Microsservico 2). Imagem amd64.
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "SmartKds!2026"
+    ports: ["1433:1433"]
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'SmartKds!2026' -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      retries: 30
+
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      sqlserver: { condition: service_healthy }
+    entrypoint: ["/opt/mssql-tools18/bin/sqlcmd", "-S", "sqlserver", "-U", "sa", "-P", "SmartKds!2026", "-C",
+                 "-Q", "IF DB_ID('smartkds_pedido') IS NULL CREATE DATABASE smartkds_pedido"]
+    restart: "no"
+
+  mongodb:
+    image: mongo:7
+    volumes: [dados-mongo:/data/db]
+    ports: ["27017:27017"]
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: smartkds
+      RABBITMQ_DEFAULT_PASS: smartkds
+    ports: ["5672:5672", "15672:15672"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 20
+
+  keycloak:
+    profiles: [keycloak]
+    image: quay.io/keycloak/keycloak:25.0
+    command: start-dev --import-realm --http-port 8180
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - ./infra/keycloak/realm-smartkds.json:/opt/keycloak/data/import/realm-smartkds.json:ro
+    ports: ["8180:8180"]
+
+  # ---------------------------------------------------------------- microsservicos (Vertical Slice)
+  catalogo-service:
+    <<: *java
+    build: ./services/catalogo-service
+    environment:
+      <<: *java-env
+      MONGODB_URI: mongodb://mongodb:27017/smartkds_catalogo
+    depends_on: [mongodb]
+    ports: ["8081:8081"]
+
+  pedido-service:
+    <<: *java
+    build: ./services/pedido-service
+    environment:
+      <<: *java-env
+      DB_URL: jdbc:sqlserver://sqlserver:1433;databaseName=smartkds_pedido;encrypt=false
+      DB_USER: sa
+      DB_PASSWORD: "SmartKds!2026"
+      CATALOGO_URL: http://catalogo-service:8081
+    depends_on:
+      sqlserver-init: { condition: service_completed_successfully }
+      rabbitmq: { condition: service_healthy }
+    ports: ["8082:8082"]
+
+  producao-service:
+    <<: *java
+    build: ./services/producao-service
+    environment:
+      <<: *java-env
+      DB_URL: jdbc:postgresql://postgres:5432/smartkds_producao
+      DB_USER: producao
+      DB_PASSWORD: producao
+      ESTABELECIMENTO_URL: http://estabelecimento-service:8084
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+    ports: ["8083:8083"]
+
+  estabelecimento-service:
+    <<: *java
+    build: ./services/estabelecimento-service
+    environment:
+      <<: *java-env
+      DB_URL: jdbc:postgresql://postgres:5432/smartkds_estabelecimento
+      DB_USER: estabelecimento
+      DB_PASSWORD: estabelecimento
+    depends_on:
+      postgres: { condition: service_healthy }
+    ports: ["8084:8084"]
+
+  # ---------------------------------------------------------------- Azure Function (HTTP Trigger)
+  status-operacional:
+    build: ./functions/status-operacional
+    ports: ["7071:80"]
+
+  # ---------------------------------------------------------------- BFFs
+  bff-mesa:
+    build: ./bff/bff-mesa
+    restart: unless-stopped
+    environment:
+      CATALOGO_URL: http://catalogo-service:8081
+      PEDIDO_URL: http://pedido-service:8082
+      ESTABELECIMENTO_URL: http://estabelecimento-service:8084
+      RABBITMQ_URL: amqp://smartkds:smartkds@rabbitmq:5672
+    ports: ["3001:3001"]
+
+  bff-kds:
+    build: ./bff/bff-kds
+    restart: unless-stopped
+    environment:
+      PRODUCAO_URL: http://producao-service:8083
+      ESTABELECIMENTO_URL: http://estabelecimento-service:8084
+      RABBITMQ_URL: amqp://smartkds:smartkds@rabbitmq:5672
+    ports: ["3002:3002"]
+
+  bff-admin:
+    build: ./bff/bff-admin
+    restart: unless-stopped
+    environment:
+      CATALOGO_URL: http://catalogo-service:8081
+      PEDIDO_URL: http://pedido-service:8082
+      PRODUCAO_URL: http://producao-service:8083
+      ESTABELECIMENTO_URL: http://estabelecimento-service:8084
+      FUNCTION_STATUS_URL: http://status-operacional/api/status-operacional
+    ports: ["3003:3003"]
+
+  # ---------------------------------------------------------------- API Gateway (unica porta de entrada)
+  api-gateway:
+    build: ./gateway/api-gateway
+    restart: unless-stopped
+    environment:
+      BFF_MESA_URL: http://bff-mesa:3001
+      BFF_KDS_URL: http://bff-kds:3002
+      BFF_ADMIN_URL: http://bff-admin:3003
+      CATALOGO_URL: http://catalogo-service:8081
+      PEDIDO_URL: http://pedido-service:8082
+      PRODUCAO_URL: http://producao-service:8083
+      ESTABELECIMENTO_URL: http://estabelecimento-service:8084
+      JWT_HABILITADO: ${JWT_HABILITADO:-false}
+      KEYCLOAK_ISSUER_URI: http://localhost:8180/realms/smartkds
+      KEYCLOAK_JWKS_URI: http://keycloak:8180/realms/smartkds/protocol/openid-connect/certs
+    ports: ["8080:8080"]
+
+  # ---------------------------------------------------------------- microfrontends (CDN simulada por nginx)
+  shell-mesa:
+    build: { context: ./frontend, args: { PROJETO: shell-mesa } }
+    ports: ["5100:80"]
+  mfe-comanda:
+    build: { context: ./frontend, args: { PROJETO: mfe-comanda } }
+    ports: ["5101:80"]
+  shell-operacao:
+    build: { context: ./frontend, args: { PROJETO: shell-operacao } }
+    ports: ["5200:80"]
+  mfe-kds:
+    build: { context: ./frontend, args: { PROJETO: mfe-kds } }
+    ports: ["5201:80"]
+  mfe-cardapio:
+    build: { context: ./frontend, args: { PROJETO: mfe-cardapio } }
+    ports: ["5202:80"]
+  mfe-gestao:
+    build: { context: ./frontend, args: { PROJETO: mfe-gestao } }
+    ports: ["5203:80"]
+
+volumes:
+  dados-postgres:
+  dados-mongo:

@@ -1,0 +1,29 @@
+server:
+  # respeita X-Forwarded-Prefix do API Gateway (Swagger em /docs/<servico>/swagger-ui.html)
+  forward-headers-strategy: framework
+  port: ${PORT:8084}
+spring:
+  application:
+    name: estabelecimento-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/smartkds_estabelecimento}
+    username: ${DB_USER:estabelecimento}
+    password: ${DB_PASSWORD:estabelecimento}
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

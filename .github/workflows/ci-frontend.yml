@@ -1,0 +1,26 @@
+name: ci-frontend
+# Typecheck, testes (incluindo os testes de arquitetura dos BFFs e dos microfrontends) e build.
+on:
+  push:
+    paths: ['frontend/**', 'bff/**', 'functions/**', '.github/workflows/ci-frontend.yml']
+  pull_request:
+    paths: ['frontend/**', 'bff/**', 'functions/**']
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        projeto: [bff/bff-mesa, bff/bff-kds, bff/bff-admin, functions/status-operacional,
+                  frontend/shell-mesa, frontend/mfe-comanda, frontend/shell-operacao, frontend/mfe-kds,
+                  frontend/mfe-cardapio, frontend/mfe-gestao]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: npm, cache-dependency-path: '${{ matrix.projeto }}/package-lock.json' }
+      - run: npm ci
+        working-directory: ${{ matrix.projeto }}
+      - run: npm test
+        working-directory: ${{ matrix.projeto }}
+      - run: npm run build
+        working-directory: ${{ matrix.projeto }}

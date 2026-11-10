@@ -1,0 +1,30 @@
+{
+  "name": "bff-mesa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SmartKDS & Menu - Backend for Frontend do cliente na mesa: resolve o QR Code, compoe cardapio e comanda e mantem o stream SSE da comanda",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@fastify/swagger": "^9.4.0",
+    "amqplib": "^0.10.5",
+    "fastify": "^5.2.0"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.6",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.0"
+  }
+}

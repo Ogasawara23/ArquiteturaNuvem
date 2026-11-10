@@ -1,0 +1,28 @@
+/* Experiencia do cliente no celular (mobile first). */
+.mesa { max-width: 640px; margin: 0 auto; padding: 0 12px 140px; }
+.mesa-topo { position: sticky; top: 0; z-index: 3; background: var(--cor-superficie); border-bottom: 1px solid var(--cor-borda); padding: 12px 4px; margin: 0 -12px 8px; }
+.mesa-topo div { display: flex; flex-direction: column; padding: 0 12px; }
+.mesa-topo small { color: var(--cor-texto-suave); }
+.mesa-erro, .carregando { max-width: 480px; margin: 20vh auto; text-align: center; padding: 0 16px; }
+.categoria { font-size: 1.05em; margin: 18px 0 6px; color: var(--cor-texto-suave); text-transform: uppercase; letter-spacing: 0.05em; }
+.itens { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.item-cardapio { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; font: inherit; color: inherit; background: var(--cor-superficie); border: 1px solid var(--cor-borda); border-radius: var(--raio); padding: 12px; cursor: pointer; }
+.item-cardapio img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+.item-texto { flex: 1; display: flex; flex-direction: column; }
+.item-texto small { color: var(--cor-texto-suave); }
+.preco { font-weight: 700; white-space: nowrap; }
+.carrinho { position: fixed; left: 0; right: 0; bottom: 0; max-height: 60vh; overflow: auto; margin: 0; border-radius: 16px 16px 0 0; z-index: 4; max-width: 640px; margin-inline: auto; }
+.carrinho ul { list-style: none; padding: 0; margin: 0 0 8px; }
+.carrinho li { padding: 6px 0; border-bottom: 1px solid var(--cor-borda); }
+.linha-item { display: flex; align-items: center; gap: 8px; justify-content: space-between; margin-top: 4px; }
+.total { display: flex; justify-content: space-between; font-size: 1.1em; margin: 8px 0 2px; }
+.status-pendente { background: var(--cor-borda); }
+.status-confirmado, .status-em_producao { background: color-mix(in srgb, var(--cor-atencao) 20%, transparent); color: var(--cor-atencao); }
+.status-pronto, .status-entregue { background: color-mix(in srgb, var(--cor-sucesso) 18%, transparent); color: var(--cor-sucesso); }
+.modal-fundo { position: fixed; inset: 0; background: rgb(0 0 0 / 45%); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
+.modal { background: var(--cor-superficie); width: 100%; max-width: 640px; max-height: 90vh; overflow: auto; border-radius: 16px 16px 0 0; padding: 18px; }
+.grupo { border: 1px solid var(--cor-borda); border-radius: 8px; margin: 10px 0; padding: 8px 12px; }
+.opcao { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.opcao input { width: auto; }
+.opcao.esgotada { opacity: 0.5; }
+.quantidade { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 12px 0; font-size: 1.3em; }
