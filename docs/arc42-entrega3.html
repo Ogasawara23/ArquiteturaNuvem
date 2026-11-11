@@ -298,6 +298,7 @@ flowchart TB
   <tr><td>ADR-16</td><td>Swagger dos microsserviços publicado pelo gateway em <code>/docs/&lt;serviço&gt;/**</code></td><td>Contrato público sem expor <code>/interno/**</code> ao navegador; o gateway calcula <code>X-Forwarded-Prefix</code> (trusted proxies).</td></tr>
   <tr><td>ADR-17</td><td>Repositório por componente + repositório guarda-chuva</td><td>Atende "um repositório público por projeto" e preserva o deploy independente; o guarda-chuva mantém compose, infra e documentação.</td></tr>
   <tr><td>ADR-18</td><td>CRUD completo da comanda: alterar item do carrinho e cancelar comanda (exclusão lógica)</td><td>Cancelar comanda com itens já na cozinha gera <code>ItemCancelado</code> para cada um (mesma saga da Figura 19); recusado se algo já estiver em produção.</td></tr>
+  <tr><td>ADR-19</td><td>API Gateway com <b>Spring Cloud Gateway</b> em vez do AWS API Gateway</td><td>O enunciado permite outro gateway. Toda a solução roda na Azure (Container Apps); um gateway AWS exigiria uma segunda nuvem, latência entre provedores e outra conta. O Spring Cloud Gateway cobre roteamento, segurança (JWT/Keycloak, tenant sobrescrito, CORS, rate limit) e entrada única, com testes de borda e ArchUnit.</td></tr>
 </table>
 
 <h3>6.5 Outros ajustes da implementação</h3>
