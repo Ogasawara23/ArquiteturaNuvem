@@ -36,7 +36,7 @@ export function registrarRotasDeAdministracao(
     { metodo: 'DELETE', url: '/cardapio/itens/:itemId', destino: (p) => `/interno/itens/${p.itemId}`, servico: s.catalogo, papeis: GERENCIA, tag: 'Cardapio', resumo: 'Remove item (removeritem)', status: 204 },
     { metodo: 'POST', url: '/cardapio/versoes', destino: () => '/interno/cardapios/versoes', servico: s.catalogo, papeis: GERENCIA, tag: 'Cardapio', resumo: 'Publica versao imutavel (publicarversaocardapio)', status: 201 },
     { metodo: 'GET', url: '/cardapio/ativo', destino: () => '/interno/cardapios/ativo', servico: s.catalogo, papeis: GERENCIA, tag: 'Cardapio', resumo: 'Versao ativa do cardapio' },
-    // pedido-service (PostgreSQL)
+    // pedido-service (Azure SQL)
     { metodo: 'GET', url: '/comandas', destino: () => '/interno/comandas', servico: s.pedido, papeis: SALAO, tag: 'Comandas', resumo: 'Lista comandas (?status=ABERTA|FECHADA)' },
     { metodo: 'GET', url: '/comandas/:comandaId', destino: (p) => `/interno/comandas/${p.comandaId}`, servico: s.pedido, papeis: SALAO, tag: 'Comandas', resumo: 'Detalha comanda' },
     { metodo: 'POST', url: '/comandas', destino: () => '/interno/comandas', servico: s.pedido, papeis: SALAO, tag: 'Comandas', resumo: 'Abre (ou reaproveita) a comanda de uma mesa (abrircomanda)' },

@@ -63,7 +63,7 @@ async function medir<T>(nome: string, tipo: Fonte['tipo'], fontes: Fonte[], cham
 
 /**
  * GET /aggregated-data: consome o Microsservico 1 (catalogo-service, MongoDB), o Microsservico 2
- * (pedido-service, PostgreSQL) e a Azure Function (status operacional) EM PARALELO e devolve
+ * (pedido-service, Azure SQL) e a Azure Function (status operacional) EM PARALELO e devolve
  * tudo em um unico response. Os indicadores do producao-service entram como enriquecimento.
  * Falha de uma fonte nao derruba a resposta: ela aparece como "indisponivel" em `fontes`.
  */

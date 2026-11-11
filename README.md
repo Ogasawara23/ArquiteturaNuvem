@@ -63,7 +63,7 @@ flowchart TB
 | Testes unitários e de arquitetura | JUnit (domínio + fatias com fakes), integração com PostgreSQL real embutido, **ArchUnit**; Vitest nos BFFs, Function e frontends, com testes de arquitetura por varredura de imports |
 | Docker Hub | `Dockerfile` em cada serviço/BFF/gateway/function + `scripts/publicar-imagens.sh` + workflow `cd.yml` |
 | README em cada projeto | `README.md` em cada um dos 15 projetos e nas pastas `frontend/` e `bff/` |
-| Repositórios públicos no GitHub | `scripts/publicar-github.sh` cria um repositório por parte (microfrontends, BFF, MS Mongo, MS SQL, Function, gateway, demais serviços) + o guarda-chuva |
+| Repositórios públicos no GitHub | Repositório público [Ogasawara23/ArquiteturaNuvem](https://github.com/Ogasawara23/ArquiteturaNuvem) (monorepo): uma pasta por projeto com README, Dockerfile e CI próprios — [frontend](frontend), [bff](bff), [catalogo-service](services/catalogo-service) (Mongo), [pedido-service](services/pedido-service) (SQL), [status-operacional](functions/status-operacional) (Function). Opcional: `scripts/publicar-github.sh` separa em um repositório por projeto |
 
 ---
 
