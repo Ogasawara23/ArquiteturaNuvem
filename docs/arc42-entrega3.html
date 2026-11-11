@@ -48,13 +48,13 @@ e os prints exigidos. Para gerar o PDF, abra este arquivo no navegador e use <i>
 (roteiro em <code>docs/ENTREGA.md</code>).</p>
 <table>
   <tr><th>Item</th><th>Link</th></tr>
-  <tr><td>GitHub — repositório guarda-chuva (documentação, compose, infra)</td><td><code>https://github.com/&lt;owner&gt;/smartkds-menu</code></td></tr>
-  <tr><td>GitHub — Microfrontend</td><td><code>https://github.com/&lt;owner&gt;/smartkds-microfrontends</code></td></tr>
-  <tr><td>GitHub — BFF</td><td><code>https://github.com/&lt;owner&gt;/smartkds-bff</code></td></tr>
-  <tr><td>GitHub — Microsserviço Mongo (catálogo)</td><td><code>https://github.com/&lt;owner&gt;/smartkds-catalogo-service</code></td></tr>
-  <tr><td>GitHub — Microsserviço SQL (pedido)</td><td><code>https://github.com/&lt;owner&gt;/smartkds-pedido-service</code></td></tr>
-  <tr><td>GitHub — Azure Function</td><td><code>https://github.com/&lt;owner&gt;/smartkds-status-operacional-function</code></td></tr>
-  <tr><td>GitHub — API Gateway e demais serviços</td><td><code>smartkds-api-gateway</code>, <code>smartkds-producao-service</code>, <code>smartkds-estabelecimento-service</code></td></tr>
+  <tr><td>GitHub — repositório público (monorepo: documentação, compose, infra e todos os projetos)</td><td><code>https://github.com/Ogasawara23/ArquiteturaNuvem</code></td></tr>
+  <tr><td>GitHub — Microfrontend</td><td><code>https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/frontend</code></td></tr>
+  <tr><td>GitHub — BFF</td><td><code>https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/bff</code></td></tr>
+  <tr><td>GitHub — Microsserviço Mongo (catálogo)</td><td><code>https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/services/catalogo-service</code></td></tr>
+  <tr><td>GitHub — Microsserviço SQL (pedido)</td><td><code>https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/services/pedido-service</code></td></tr>
+  <tr><td>GitHub — Azure Function</td><td><code>https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/functions/status-operacional</code></td></tr>
+  <tr><td>GitHub — API Gateway e demais serviços</td><td><code>https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/gateway/api-gateway</code>, <code>https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/services/producao-service</code>, <code>https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/services/estabelecimento-service</code></td></tr>
   <tr><td>Docker Hub</td><td><code>https://hub.docker.com/u/&lt;usuario&gt;</code> — <code>smartkds-catalogo-service</code>, <code>smartkds-pedido-service</code>, <code>smartkds-producao-service</code>, <code>smartkds-estabelecimento-service</code>, <code>smartkds-api-gateway</code>, <code>smartkds-bff-mesa</code>, <code>smartkds-bff-kds</code>, <code>smartkds-bff-admin</code>, <code>smartkds-status-operacional-function</code> (tag <code>v1</code>)</td></tr>
   <tr><td>API Gateway</td><td><code>https://&lt;gateway&gt;</code></td></tr>
   <tr><td>Endpoint agregado</td><td><code>https://&lt;gateway&gt;/bff/admin/aggregated-data</code></td></tr>
@@ -81,7 +81,7 @@ e os prints exigidos. Para gerar o PDF, abra este arquivo no navegador e use <i>
   <tr><td>Clean Architecture + Vertical Slice</td><td>Domain = <code>shared/dominio</code> (Java puro); Application = <code>Handler</code>/<code>Query</code> da fatia; Infrastructure = <code>shared/persistencia|outbox|inbox|integracao</code>; API = <code>Endpoint</code>/<code>Listener</code>. Fatias em <code>features/&lt;fatia&gt;</code>.</td></tr>
   <tr><td>Testes unitários e de arquitetura</td><td>JUnit + ArchUnit (13 a 18 regras por serviço), integração com PostgreSQL real e SQL Server (Testcontainers); Vitest nos BFFs, Function e frontends com testes de arquitetura por imports.</td></tr>
   <tr><td>Docker Hub</td><td>Dockerfile por serviço/BFF/gateway/function; <code>scripts/publicar-imagens.sh</code> e workflow <code>cd.yml</code>.</td></tr>
-  <tr><td>Repositórios públicos e README</td><td>Um repositório por parte (<code>scripts/publicar-github.sh</code>) e README com arquitetura, tecnologias, execução e alunos em cada projeto.</td></tr>
+  <tr><td>Repositórios públicos e README</td><td>Repositório público único (monorepo) com uma pasta por projeto — Microfrontend, BFF, MS Mongo, MS SQL, Function, gateway — cada uma com README (arquitetura, tecnologias, execução e alunos), Dockerfile e job de CI próprios (ADR-17).</td></tr>
 </table>
 
 <h2>2. Software Architecture Canvas (atualizado)</h2>
@@ -296,7 +296,7 @@ flowchart TB
   <tr><td>ADR-14</td><td><b>Azure Function</b> <code>status-operacional</code> (HTTP Trigger) para enriquecimento</td><td>Cálculo sem estado (faixa horária, pico, multiplicador) fora dos serviços de domínio; custo zero em repouso. A regra é pura e testada sem o SDK.</td></tr>
   <tr><td>ADR-15</td><td><code>GET /aggregated-data</code> no <b>bff-admin</b></td><td>A agregação é composição de tela (papel do BFF, ADR-03). Chamadas em paralelo com circuit breaker; uma fonte fora não derruba a resposta.</td></tr>
   <tr><td>ADR-16</td><td>Swagger dos microsserviços publicado pelo gateway em <code>/docs/&lt;serviço&gt;/**</code></td><td>Contrato público sem expor <code>/interno/**</code> ao navegador; o gateway calcula <code>X-Forwarded-Prefix</code> (trusted proxies).</td></tr>
-  <tr><td>ADR-17</td><td>Repositório por componente + repositório guarda-chuva</td><td>Atende "um repositório público por projeto" e preserva o deploy independente; o guarda-chuva mantém compose, infra e documentação.</td></tr>
+  <tr><td>ADR-17</td><td><b>Monorepo</b> público com projetos independentes</td><td>Cada projeto (Microfrontend, BFF, MS Mongo, MS SQL, Function, gateway) fica em pasta própria com README, Dockerfile, build, testes e job de CI isolados (matriz do GitHub Actions) e imagem própria no Docker Hub, preservando o deploy independente. Um único repositório mantém contratos (AsyncAPI), docker-compose, infra e documentação versionados juntos e simplifica a avaliação. O script <code>scripts/publicar-github.sh</code> permite separar em um repositório por projeto, se necessário.</td></tr>
   <tr><td>ADR-18</td><td>CRUD completo da comanda: alterar item do carrinho e cancelar comanda (exclusão lógica)</td><td>Cancelar comanda com itens já na cozinha gera <code>ItemCancelado</code> para cada um (mesma saga da Figura 19); recusado se algo já estiver em produção.</td></tr>
   <tr><td>ADR-19</td><td>API Gateway com <b>Spring Cloud Gateway</b> em vez do AWS API Gateway</td><td>O enunciado permite outro gateway. Toda a solução roda na Azure (Container Apps); um gateway AWS exigiria uma segunda nuvem, latência entre provedores e outra conta. O Spring Cloud Gateway cobre roteamento, segurança (JWT/Keycloak, tenant sobrescrito, CORS, rate limit) e entrada única, com testes de borda e ArchUnit.</td></tr>
 </table>
