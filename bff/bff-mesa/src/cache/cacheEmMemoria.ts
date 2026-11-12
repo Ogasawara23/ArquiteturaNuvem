@@ -1,3 +1,8 @@
+function ehRespostaDefinitiva(erro: unknown): boolean {
+  const status = (erro as { status?: unknown } | null)?.status;
+  return typeof status === 'number' && status >= 400 && status < 500;
+}
+
 /** Cache em memoria com TTL; guarda tambem o ultimo valor para degradacao controlada. */
 export class CacheEmMemoria<T> {
   private readonly entradas = new Map<string, { valor: T; expiraEm: number }>();
@@ -15,7 +20,13 @@ export class CacheEmMemoria<T> {
       this.entradas.set(chave, { valor, expiraEm: this.relogio() + this.ttlMs });
       return valor;
     } catch (erro) {
-      if (atual) return atual.valor; // valor expirado e melhor que nenhum
+      // Resposta definitiva da dependencia (4xx, ex.: QR Code rotacionado -> 404): o valor guardado
+      // deixou de valer e nao pode ser servido. So a indisponibilidade (5xx/timeout) usa o valor expirado.
+      if (ehRespostaDefinitiva(erro)) {
+        this.entradas.delete(chave);
+        throw erro;
+      }
+      if (atual) return atual.valor; // dependencia fora do ar: valor expirado e melhor que nenhum
       throw erro;
     }
   }
