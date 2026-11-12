@@ -10,15 +10,15 @@ Este arquivo reúne o que precisa entrar no PDF arc42 da Entrega 3. O conteúdo 
 | GitHub — Microfrontend / BFF | `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/frontend` · `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/bff` |
 | GitHub — MS Mongo / MS SQL / Function | `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/services/catalogo-service` · `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/services/pedido-service` · `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/functions/status-operacional` |
 | GitHub — demais | `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/gateway/api-gateway` · `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/services/producao-service` · `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/services/estabelecimento-service` |
-| Docker Hub (imagens) | `https://hub.docker.com/u/<usuario>` — `smartkds-catalogo-service`, `smartkds-pedido-service`, `smartkds-producao-service`, `smartkds-estabelecimento-service`, `smartkds-api-gateway`, `smartkds-bff-mesa`, `smartkds-bff-kds`, `smartkds-bff-admin`, `smartkds-status-operacional-function` |
-| API Gateway | `https://<gateway>` |
-| Endpoint agregado | `https://<gateway>/bff/admin/aggregated-data` |
-| Swagger BFF mesa / KDS / admin | `https://<gateway>/bff/mesa/docs` · `https://<gateway>/bff/kds/docs` · `https://<gateway>/bff/admin/docs` |
-| Swagger microsserviços | `https://<gateway>/docs/catalogo/swagger-ui.html` · `/docs/pedido/...` · `/docs/producao/...` · `/docs/estabelecimento/...` |
-| Swagger dos eventos (AsyncAPI) | `https://<gateway>/bff/admin/eventos` (YAML em `/bff/admin/asyncapi.yaml`) |
-| Azure Function | `https://<function-app>.azurewebsites.net/api/status-operacional?tenantId=demo` |
-| Frontend — operação | `https://<swa-shell-operacao>` |
-| Frontend — mesa (QR Code) | `https://<swa-shell-mesa>/m/demo-mesa-1` |
+| Docker Hub (imagens) | `https://hub.docker.com/u/viniogasawara` — `smartkds-catalogo-service`, `smartkds-pedido-service`, `smartkds-producao-service`, `smartkds-estabelecimento-service`, `smartkds-api-gateway`, `smartkds-bff-mesa`, `smartkds-bff-kds`, `smartkds-bff-admin`, `smartkds-status-operacional-function` |
+| API Gateway | `https://api-gateway.livelyforest-4b10050b.chilecentral.azurecontainerapps.io` |
+| Endpoint agregado | `https://api-gateway.livelyforest-4b10050b.chilecentral.azurecontainerapps.io/bff/admin/aggregated-data` |
+| Swagger BFF mesa / KDS / admin | `https://api-gateway.livelyforest-4b10050b.chilecentral.azurecontainerapps.io/bff/mesa/docs` · `https://api-gateway.livelyforest-4b10050b.chilecentral.azurecontainerapps.io/bff/kds/docs` · `https://api-gateway.livelyforest-4b10050b.chilecentral.azurecontainerapps.io/bff/admin/docs` |
+| Swagger microsserviços | `https://api-gateway.livelyforest-4b10050b.chilecentral.azurecontainerapps.io/docs/catalogo/swagger-ui.html` · `/docs/pedido/...` · `/docs/producao/...` · `/docs/estabelecimento/...` |
+| Swagger dos eventos (AsyncAPI) | `https://api-gateway.livelyforest-4b10050b.chilecentral.azurecontainerapps.io/bff/admin/eventos` (YAML em `/bff/admin/asyncapi.yaml`) |
+| Azure Function | `https://smartkds-status-5560.azurewebsites.net/api/status-operacional?tenantId=demo` |
+| Frontend — operação | `https://shell-operacao.livelyforest-4b10050b.chilecentral.azurecontainerapps.io` |
+| Frontend — mesa (QR Code) | `https://shell-mesa.livelyforest-4b10050b.chilecentral.azurecontainerapps.io/m/demo-mesa-1` |
 | Vídeo no YouTube | `https://youtu.be/<id>` |
 
 ## 2. Passo a passo de publicação
@@ -27,7 +27,7 @@ Este arquivo reúne o que precisa entrar no PDF arc42 da Entrega 3. O conteúdo 
 2. **Docker Hub**: `DOCKERHUB_USER=<usuario> TAG=v1 ./scripts/publicar-imagens.sh` (ou tag `v1` com os segredos do `cd.yml`).
 3. **Dados gerenciados**: cluster M0 no MongoDB Atlas (libere o IP `0.0.0.0/0` ou os IPs de saída do Container Apps); o **Azure SQL Database** é criado pelo `implantar.sh` (oferta gratuita ou Basic 5 DTU); PostgreSQL (Azure Flexible B1ms ou Neon) com `infra/postgres/init.sql` para produção e estabelecimento (troque as senhas); instância gratuita no CloudAMQP.
 4. **Backend na Azure**: exporte as variáveis do cabeçalho de `infra/azure/implantar.sh` e execute-o.
-5. **Dados de demonstração**: `API=https://<gateway> ./scripts/popular-demo.sh`.
+5. **Dados de demonstração**: `API=https://api-gateway.livelyforest-4b10050b.chilecentral.azurecontainerapps.io ./scripts/popular-demo.sh`.
 6. **Frontends**: `URL_GATEWAY=<gateway> ./infra/azure/implantar-frontends.sh` publica os 4 remotes no Azure Static Web Apps e depois os 2 shells apontando para os `remoteEntry.js` publicados
    (CORS dos remotes em `public/staticwebapp.config.json`).
 7. Preencha a tabela da seção 1 em `arc42-entrega3.html`, capture os 9 prints listados na seção 7 dele e gere o PDF.
@@ -35,7 +35,7 @@ Este arquivo reúne o que precisa entrar no PDF arc42 da Entrega 3. O conteúdo 
 ## 3. Roteiro do vídeo (sempre com URLs da nuvem, nunca localhost)
 
 1. **Arquitetura (1 min)**: Figura 2 do arc42 e o mapa "requisito → implementação" do README.
-2. **Cliente (2 min)**: abrir `https://<swa-shell-mesa>/m/demo-mesa-1` no celular (ou ler o QR Code gerado na aba Mesas),
+2. **Cliente (2 min)**: abrir `https://shell-mesa.livelyforest-4b10050b.chilecentral.azurecontainerapps.io/m/demo-mesa-1` no celular (ou ler o QR Code gerado na aba Mesas),
    montar o pedido com modificadores e enviar à cozinha.
 3. **Cozinha (2 min)**: no shell de operação, perfil Cozinha, estação Grill: o ticket aparece **sem recarregar** (SSE);
    Iniciar preparo → Pronto → Bump. Mostrar o item do cliente mudando para "Em preparo" e "Entregue" em tempo real.
