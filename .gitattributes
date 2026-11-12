@@ -1,0 +1,4 @@
+# Scripts shell e Dockerfiles sempre com LF (no Windows, CRLF quebra o bash: ": command not found")
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.mjs text eol=lf
