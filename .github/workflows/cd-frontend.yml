@@ -1,0 +1,50 @@
+name: cd-frontend
+# Publica as imagens dos 6 microfrontends (Vite + nginx) no Docker Hub a cada tag fe-v*.
+# As URLs entram no bundle em tempo de build, por isso vem de infra/azure/frontend.env
+# (gerado por infra/azure/implantar-frontends-containerapps.sh depois do backend).
+# Usado quando o Azure Static Web Apps nao esta disponivel na regiao permitida da assinatura.
+# Segredos: DOCKERHUB_USERNAME e DOCKERHUB_TOKEN.
+on:
+  push:
+    tags: ['fe-v*']
+jobs:
+  imagens:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        projeto: [mfe-comanda, mfe-kds, mfe-cardapio, mfe-gestao, shell-mesa, shell-operacao]
+    steps:
+      - uses: actions/checkout@v5
+      - name: URLs da nuvem
+        id: urls
+        run: |
+          set -a; . infra/azure/frontend.env; set +a
+          url() { echo "https://$1.$DOMINIO_FRONTEND"; }
+          {
+            echo "api=$URL_GATEWAY"
+            echo "mesa=$(url shell-mesa)"
+            echo "comanda=$(url mfe-comanda)/assets/remoteEntry.js"
+            echo "kds=$(url mfe-kds)/assets/remoteEntry.js"
+            echo "cardapio=$(url mfe-cardapio)/assets/remoteEntry.js"
+            echo "gestao=$(url mfe-gestao)/assets/remoteEntry.js"
+          } >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/Dockerfile
+          push: true
+          build-args: |
+            PROJETO=${{ matrix.projeto }}
+            VITE_API_URL=${{ steps.urls.outputs.api }}
+            VITE_URL_MESA=${{ steps.urls.outputs.mesa }}
+            VITE_REMOTE_COMANDA=${{ steps.urls.outputs.comanda }}
+            VITE_REMOTE_KDS=${{ steps.urls.outputs.kds }}
+            VITE_REMOTE_CARDAPIO=${{ steps.urls.outputs.cardapio }}
+            VITE_REMOTE_GESTAO=${{ steps.urls.outputs.gestao }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/smartkds-${{ matrix.projeto }}:${{ github.ref_name }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/smartkds-${{ matrix.projeto }}:latest
