@@ -7,6 +7,7 @@ import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -24,6 +25,13 @@ class MensageriaConfig {
     static final String EXCHANGE_PRODUCAO = "smartkds.producao";
     static final String EXCHANGE_DLX = "smartkds.dlx";
 
+    /**
+     * smartkds.dlq=false (variavel SMARTKDS_DLQ) declara as filas sem x-dead-letter-*: usado apenas no modo local
+     * sem Docker, cujo broker (Qpid) nao suporta esses argumentos. No RabbitMQ/CloudAMQP fica sempre true.
+     */
+    @Value("${smartkds.dlq:true}")
+    boolean deadLetterHabilitado;
+
     @Bean
     Declarables topologia() {
         TopicExchange pedidos = new TopicExchange(EXCHANGE_PEDIDOS, true, false);
@@ -36,12 +44,11 @@ class MensageriaConfig {
         return new Declarables(declaraveis);
     }
 
-    private static List<org.springframework.amqp.core.Declarable> filaComDlq(String nome, TopicExchange origem,
+    private List<org.springframework.amqp.core.Declarable> filaComDlq(String nome, TopicExchange origem,
                                                                             String chave, DirectExchange dlx) {
-        Queue fila = QueueBuilder.durable(nome)
-                .deadLetterExchange(dlx.getName())
-                .deadLetterRoutingKey(nome + ".dlq")
-                .build();
+        Queue fila = deadLetterHabilitado
+                ? QueueBuilder.durable(nome).deadLetterExchange(dlx.getName()).deadLetterRoutingKey(nome + ".dlq").build()
+                : QueueBuilder.durable(nome).build();
         Queue dlq = QueueBuilder.durable(nome + ".dlq").build();
         Binding ligacao = BindingBuilder.bind(fila).to(origem).with(chave);
         Binding ligacaoDlq = BindingBuilder.bind(dlq).to(dlx).with(nome + ".dlq");

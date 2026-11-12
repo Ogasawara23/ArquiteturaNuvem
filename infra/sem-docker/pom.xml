@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>br.com.smartkds</groupId>
+    <artifactId>infra-sem-docker</artifactId>
+    <version>1.0.0</version>
+    <name>infra-sem-docker</name>
+    <description>Sobe PostgreSQL, MongoDB e um broker AMQP 0-9-1 localmente, sem Docker (somente desenvolvimento)</description>
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <qpid.version>10.1.1</qpid.version>
+    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.zonky.test.postgres</groupId>
+                <artifactId>embedded-postgres-binaries-bom</artifactId>
+                <version>16.15.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    <dependencies>
+        <dependency><groupId>io.zonky.test</groupId><artifactId>embedded-postgres</artifactId><version>2.2.2</version></dependency>
+        <dependency><groupId>de.flapdoodle.embed</groupId><artifactId>de.flapdoodle.embed.mongo</artifactId><version>4.24.0</version></dependency>
+        <dependency><groupId>org.apache.qpid</groupId><artifactId>qpid-broker-core</artifactId><version>${qpid.version}</version></dependency>
+        <dependency><groupId>org.apache.qpid</groupId><artifactId>qpid-broker-plugins-amqp-0-8-protocol</artifactId><version>${qpid.version}</version></dependency>
+        <dependency><groupId>org.apache.qpid</groupId><artifactId>qpid-broker-plugins-memory-store</artifactId><version>${qpid.version}</version></dependency>
+        <dependency><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId><version>1.5.12</version></dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <mainClass>br.com.smartkds.infra.InfraSemDocker</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

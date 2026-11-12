@@ -6,8 +6,8 @@
 #   - Azure SQL Database (oferta gratuita / Basic) -> pedido-service (Microsservico 2), criado por este script
 #   - PostgreSQL (Azure Flexible B1ms ou Neon free)  -> producao, estabelecimento (rode infra/postgres/init.sql)
 #   - CloudAMQP "Little Lemur" (RabbitMQ gratuito) -> RABBITMQ_URL (amqps://...)
-#   - Azure Container Apps (consumo, escala a zero) -> 4 microsservicos, 3 BFFs, API Gateway
-#   - Azure Functions (Consumption, Node 20)       -> status-operacional (HTTP Trigger)
+#   - Azure Container Apps (consumo; MIN_REPLICAS) -> 4 microsservicos, 3 BFFs, API Gateway
+#   - Azure Functions (Consumption, Node 22)       -> status-operacional (HTTP Trigger)
 #   - Azure Static Web Apps (Free)                 -> 2 shells + 4 remotes (CDN)
 #
 # Pre-requisitos: az login; imagens publicadas com scripts/publicar-imagens.sh; variaveis abaixo exportadas.
@@ -18,6 +18,9 @@ set -euo pipefail
 : "${PG_SENHA_PRODUCAO:?}" "${PG_SENHA_ESTABELECIMENTO:?}"
 : "${SQL_ADMIN_SENHA:?senha forte do administrador do Azure SQL}"
 TAG="${TAG:-v1}"
+# Replica minima 1: os consumidores do RabbitMQ (pedido, producao e BFFs) precisam estar de pe para
+# receber eventos, e isso evita a partida a frio do Java durante o video. Depois use MIN_REPLICAS=0.
+MIN_REPLICAS="${MIN_REPLICAS:-1}"
 RG="${RG:-rg-smartkds}"
 LOC="${LOC:-brazilsouth}"
 AMBIENTE="${AMBIENTE:-cae-smartkds}"
@@ -36,7 +39,7 @@ app() {
   az containerapp create -n "$nome" -g "$RG" --environment "$AMBIENTE" \
     --image "docker.io/$DOCKERHUB_USER/smartkds-$nome:$TAG" \
     --target-port "$porta" --ingress "$ingresso" \
-    --min-replicas 0 --max-replicas 2 --cpu 0.5 --memory 1.0Gi \
+    --min-replicas "$MIN_REPLICAS" --max-replicas 2 --cpu 0.5 --memory 1.0Gi \
     --env-vars "$@" -o none
   echo "  $nome implantado ($ingresso)"
 }
@@ -53,7 +56,7 @@ URL_SQL="jdbc:sqlserver://$SQL_SERVIDOR.database.windows.net:1433;databaseName=s
 echo ">> Azure Function (HTTP Trigger)"
 az storage account create -n "$STORAGE" -g "$RG" -l "$LOC" --sku Standard_LRS -o none
 az functionapp create -n "$FUNCAO" -g "$RG" --storage-account "$STORAGE" --consumption-plan-location "$LOC" \
-  --runtime node --runtime-version 20 --functions-version 4 --os-type Linux -o none
+  --runtime node --runtime-version 22 --functions-version 4 --os-type Linux -o none
 ( cd "$(dirname "$0")/../../functions/status-operacional" && npm ci && npm run build && func azure functionapp publish "$FUNCAO" )
 URL_FUNCAO="https://$(az functionapp show -n "$FUNCAO" -g "$RG" --query defaultHostName -o tsv)/api/status-operacional"
 
@@ -92,10 +95,8 @@ Backend implantado.
 
 Proximos passos:
   1. API=$URL_GATEWAY ./scripts/popular-demo.sh
-  2. Frontends no Azure Static Web Apps (um por microfrontend), por exemplo:
-       az staticwebapp create -n swa-mfe-kds -g $RG -l eastus2 --sku Free
-       (cd frontend/mfe-kds && VITE_API_URL=$URL_GATEWAY npx vite build && \\
-        npx @azure/static-web-apps-cli deploy dist --deployment-token \$(az staticwebapp secrets list -n swa-mfe-kds --query properties.apiKey -o tsv) --env production)
-     Construa os REMOTES primeiro e passe as URLs deles aos shells:
-       VITE_REMOTE_KDS=https://<swa-mfe-kds>/assets/remoteEntry.js (idem CARDAPIO, GESTAO, COMANDA) e VITE_URL_MESA=https://<swa-shell-mesa>
+  2. Frontends no Azure Static Web Apps (remotes primeiro, depois os shells):
+       URL_GATEWAY=$URL_GATEWAY RG=$RG ./infra/azure/implantar-frontends.sh
+  3. Teste ponta a ponta na nuvem:
+       API=$URL_GATEWAY QR=demo-mesa-4 node scripts/teste-ponta-a-ponta.mjs
 EOF

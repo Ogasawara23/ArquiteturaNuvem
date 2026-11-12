@@ -28,14 +28,14 @@ export interface Estacao {
 /** Unico ponto do remote que fala HTTP: todas as chamadas vao ao API Gateway em /bff/kds/**. */
 export function criarClienteKds(sessao: Sessao) {
   const base = `${sessao.apiUrl.replace(/\/$/, '')}/bff/kds`;
-  const cabecalhos = (): Record<string, string> => {
-    const h: Record<string, string> = { 'content-type': 'application/json' };
+  const cabecalhos = (comCorpo: boolean): Record<string, string> => {
+    const h: Record<string, string> = comCorpo ? { 'content-type': 'application/json' } : {};
     if (sessao.token) h.authorization = `Bearer ${sessao.token}`;
     else h['x-tenant-id'] = sessao.tenantId; // modo demonstracao (gateway sem Keycloak)
     return h;
   };
   async function chamar<T>(metodo: string, caminho: string, corpo?: unknown): Promise<T> {
-    const r = await fetch(`${base}${caminho}`, { method: metodo, headers: cabecalhos(), body: corpo ? JSON.stringify(corpo) : undefined });
+    const r = await fetch(`${base}${caminho}`, { method: metodo, headers: cabecalhos(corpo !== undefined), body: corpo ? JSON.stringify(corpo) : undefined });
     if (!r.ok) {
       const problema = await r.json().catch(() => ({}));
       throw new Error(problema.detail ?? `erro ${r.status}`);

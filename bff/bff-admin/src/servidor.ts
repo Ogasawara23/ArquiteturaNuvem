@@ -37,6 +37,18 @@ export function dependenciasPadrao(): Dependencias {
 export async function criarServidor(deps: Dependencias = dependenciasPadrao()): Promise<FastifyInstance> {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? 'info' }, genReqId: (r) => String(r.headers['x-correlation-id'] ?? randomUUID()) });
 
+  // Corpo JSON vazio (ex.: POST /bump enviado com content-type) e aceito como "sem corpo".
+  app.removeContentTypeParser('application/json');
+  app.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, corpo, pronto) => {
+    const texto = String(corpo ?? '').trim();
+    if (!texto) return pronto(null, undefined);
+    try {
+      pronto(null, JSON.parse(texto));
+    } catch {
+      pronto(new ErroHttp(400, 'Requisicao invalida', 'JSON malformado'), undefined);
+    }
+  });
+
   app.setErrorHandler((erro, req, reply) => {
     const correlationId = String(req.headers['x-correlation-id'] ?? req.id);
     if (erro instanceof ErroHttp) {
@@ -46,6 +58,11 @@ export async function criarServidor(deps: Dependencias = dependenciasPadrao()): 
     if ((erro as { validation?: unknown }).validation) {
       return reply.code(400).type('application/problem+json')
         .send({ title: 'Requisicao invalida', status: 400, detail: (erro as Error).message, correlationId });
+    }
+    const statusDoFastify = (erro as { statusCode?: number }).statusCode;
+    if (statusDoFastify && statusDoFastify >= 400 && statusDoFastify < 500) {
+      return reply.code(statusDoFastify).type('application/problem+json')
+        .send({ title: 'Requisicao invalida', status: statusDoFastify, detail: (erro as Error).message, correlationId });
     }
     req.log.error(erro);
     return reply.code(500).type('application/problem+json')

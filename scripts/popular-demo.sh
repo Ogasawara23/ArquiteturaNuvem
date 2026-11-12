@@ -8,7 +8,7 @@ API="${API:-http://localhost:8080}"
 CAB=(-H "content-type: application/json" -H "X-Tenant-Id: demo")
 [[ -n "${TOKEN:-}" ]] && CAB+=(-H "Authorization: Bearer $TOKEN")
 
-item() { curl -fsS -X POST "$API/bff/admin/cardapio/itens" "${CAB[@]}" -d "$1" > /dev/null && echo "  + $(echo "$1" | sed -E 's/.*"nome":"([^"]+)".*/\1/')"; }
+item() { curl -fsS -X POST "$API/bff/admin/cardapio/itens" "${CAB[@]}" -d "$1" > /dev/null && echo "  + $(echo "$1" | grep -o '"nome":"[^"]*"' | head -1 | cut -d'"' -f4)"; }
 
 echo "Cadastrando itens em $API ..."
 item '{"nome":"Hamburguer Artesanal 180g","descricao":"Pao brioche, cheddar e cebola caramelizada","categoria":"Lanches","precoCentavos":4200,"estacaoSugerida":"grill","tempoAlvoPreparoSegundos":720,"gruposModificadores":[{"nome":"Ponto da carne","obrigatorio":true,"minimoSelecoes":1,"maximoSelecoes":1,"opcoes":[{"nome":"Mal passado","precoAdicionalCentavos":0,"disponivel":true},{"nome":"Ao ponto","precoAdicionalCentavos":0,"disponivel":true},{"nome":"Bem passado","precoAdicionalCentavos":0,"disponivel":true}]},{"nome":"Adicionais","obrigatorio":false,"minimoSelecoes":0,"maximoSelecoes":3,"opcoes":[{"nome":"Bacon extra","precoAdicionalCentavos":600,"disponivel":true},{"nome":"Cheddar extra","precoAdicionalCentavos":400,"disponivel":true},{"nome":"Ovo","precoAdicionalCentavos":300,"disponivel":true}]}]}'

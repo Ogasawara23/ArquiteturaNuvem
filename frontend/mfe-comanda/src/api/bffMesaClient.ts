@@ -39,7 +39,7 @@ export function criarClienteMesa(apiUrl: string, qrToken: string) {
   async function chamar<T>(metodo: string, caminho: string, corpo?: unknown): Promise<T> {
     const r = await fetch(`${base}${caminho}`, {
       method: metodo,
-      headers: { 'content-type': 'application/json' },
+      headers: corpo === undefined ? {} : { 'content-type': 'application/json' },
       body: corpo === undefined ? undefined : JSON.stringify(corpo),
     });
     if (!r.ok) {

@@ -1,0 +1,15 @@
+{
+  "routes": [
+    {
+      "route": "/assets/*",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=300"
+      }
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "*.{js,css,png,svg,ico,json}"]
+  }
+}

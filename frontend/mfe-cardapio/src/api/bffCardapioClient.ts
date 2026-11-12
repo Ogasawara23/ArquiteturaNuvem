@@ -30,7 +30,7 @@ export interface ItemCompleto extends DadosDoItem { id: string; disponivel: bool
 export function criarClienteCardapio(sessao: Sessao) {
   const base = `${sessao.apiUrl.replace(/\/$/, '')}/bff/admin`;
   async function chamar<T>(metodo: string, caminho: string, corpo?: unknown): Promise<T> {
-    const h: Record<string, string> = { 'content-type': 'application/json' };
+    const h: Record<string, string> = corpo === undefined ? {} : { 'content-type': 'application/json' };
     if (sessao.token) h.authorization = `Bearer ${sessao.token}`;
     else h['x-tenant-id'] = sessao.tenantId;
     const r = await fetch(`${base}${caminho}`, { method: metodo, headers: h, body: corpo === undefined ? undefined : JSON.stringify(corpo) });

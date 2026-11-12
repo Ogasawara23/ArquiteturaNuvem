@@ -24,3 +24,6 @@ local.settings.json
 .vscode/
 .DS_Store
 Thumbs.db
+
+# logs do modo local
+.logs/

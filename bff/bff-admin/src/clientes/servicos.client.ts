@@ -58,7 +58,7 @@ export class CatalogoClient extends Repassador {
   }
 }
 
-/** Microsservico 2 (PostgreSQL). */
+/** Microsservico 2 (Azure SQL Database). */
 export class PedidoClient extends Repassador {
   listarComandas(contexto: Contexto, status?: string): Promise<ComandaResumo[]> {
     return this.repassar(contexto, 'GET', '/interno/comandas', undefined, { status });

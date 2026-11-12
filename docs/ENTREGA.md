@@ -6,10 +6,10 @@ Este arquivo reúne o que precisa entrar no PDF arc42 da Entrega 3. O conteúdo 
 
 | Item | Link |
 |---|---|
-| GitHub — guarda-chuva | `https://github.com/<owner>/smartkds-menu` |
-| GitHub — Microfrontend / BFF | `https://github.com/<owner>/smartkds-microfrontends` · `https://github.com/<owner>/smartkds-bff` |
-| GitHub — MS Mongo / MS SQL / Function | `smartkds-catalogo-service` · `smartkds-pedido-service` · `smartkds-status-operacional-function` |
-| GitHub — demais | `smartkds-api-gateway` · `smartkds-producao-service` · `smartkds-estabelecimento-service` |
+| GitHub (repositório público, monorepo) | `https://github.com/Ogasawara23/ArquiteturaNuvem` |
+| GitHub — Microfrontend / BFF | `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/frontend` · `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/bff` |
+| GitHub — MS Mongo / MS SQL / Function | `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/services/catalogo-service` · `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/services/pedido-service` · `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/functions/status-operacional` |
+| GitHub — demais | `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/gateway/api-gateway` · `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/services/producao-service` · `https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/services/estabelecimento-service` |
 | Docker Hub (imagens) | `https://hub.docker.com/u/<usuario>` — `smartkds-catalogo-service`, `smartkds-pedido-service`, `smartkds-producao-service`, `smartkds-estabelecimento-service`, `smartkds-api-gateway`, `smartkds-bff-mesa`, `smartkds-bff-kds`, `smartkds-bff-admin`, `smartkds-status-operacional-function` |
 | API Gateway | `https://<gateway>` |
 | Endpoint agregado | `https://<gateway>/bff/admin/aggregated-data` |
@@ -23,13 +23,13 @@ Este arquivo reúne o que precisa entrar no PDF arc42 da Entrega 3. O conteúdo 
 
 ## 2. Passo a passo de publicação
 
-1. **GitHub** (repositórios públicos): instale o GitHub CLI, `gh auth login` e rode `GITHUB_OWNER=<usuario-ou-org> ./scripts/publicar-github.sh` — cria um repositório por parte (Microfrontend, BFF, MS Mongo, MS SQL, Function, gateway e demais serviços) com CI próprio, além do guarda-chuva `smartkds-menu`.
+1. **GitHub**: o projeto está no repositório público `https://github.com/Ogasawara23/ArquiteturaNuvem` (monorepo, uma pasta por projeto, ADR-17). Opcional: `GITHUB_OWNER=<usuario> ./scripts/publicar-github.sh` cria um repositório por projeto.
 2. **Docker Hub**: `DOCKERHUB_USER=<usuario> TAG=v1 ./scripts/publicar-imagens.sh` (ou tag `v1` com os segredos do `cd.yml`).
 3. **Dados gerenciados**: cluster M0 no MongoDB Atlas (libere o IP `0.0.0.0/0` ou os IPs de saída do Container Apps); o **Azure SQL Database** é criado pelo `implantar.sh` (oferta gratuita ou Basic 5 DTU); PostgreSQL (Azure Flexible B1ms ou Neon) com `infra/postgres/init.sql` para produção e estabelecimento (troque as senhas); instância gratuita no CloudAMQP.
 4. **Backend na Azure**: exporte as variáveis do cabeçalho de `infra/azure/implantar.sh` e execute-o.
 5. **Dados de demonstração**: `API=https://<gateway> ./scripts/popular-demo.sh`.
-6. **Frontends**: publique os 4 remotes no Azure Static Web Apps e depois os 2 shells apontando para os `remoteEntry.js` publicados
-   (instruções no final da saída do `implantar.sh`).
+6. **Frontends**: `URL_GATEWAY=<gateway> ./infra/azure/implantar-frontends.sh` publica os 4 remotes no Azure Static Web Apps e depois os 2 shells apontando para os `remoteEntry.js` publicados
+   (CORS dos remotes em `public/staticwebapp.config.json`).
 7. Preencha a tabela da seção 1 em `arc42-entrega3.html`, capture os 9 prints listados na seção 7 dele e gere o PDF.
 
 ## 3. Roteiro do vídeo (sempre com URLs da nuvem, nunca localhost)

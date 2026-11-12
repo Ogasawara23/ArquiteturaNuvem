@@ -1,0 +1,30 @@
+{
+  "name": "smartkds-broker-local",
+  "modelVersion": "9.0",
+  "authenticationproviders": [
+    {
+      "name": "plain",
+      "type": "Plain",
+      "secureOnlyMechanisms": [],
+      "users": [{ "name": "guest", "type": "managed", "password": "guest" }]
+    }
+  ],
+  "ports": [
+    {
+      "name": "AMQP",
+      "port": "5672",
+      "bindingAddress": "localhost",
+      "protocols": ["AMQP_0_9_1"],
+      "authenticationProvider": "plain",
+      "virtualhostaliases": [{ "name": "defaultAlias", "type": "defaultAlias" }]
+    }
+  ],
+  "virtualhostnodes": [
+    {
+      "name": "default",
+      "type": "Memory",
+      "defaultVirtualHostNode": "true",
+      "virtualHostInitialConfiguration": "{\"type\": \"Memory\"}"
+    }
+  ]
+}

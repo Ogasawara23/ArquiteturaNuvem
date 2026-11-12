@@ -25,7 +25,7 @@ class AplicacaoConfig {
         return new OpenAPI().info(new Info()
                 .title("SmartKDS & Menu - pedido-service")
                 .version("1.0.0")
-                .description("Microsservico 2 (PostgreSQL): comanda eletronica, confirmacao de pedido com "
+                .description("Microsservico 2 (Azure SQL Database): comanda eletronica, confirmacao de pedido com "
                         + "Transactional Outbox, cancelamento, fechamento e auditoria. "
                         + "Rotas internas exigem o cabecalho X-Tenant-Id."));
     }

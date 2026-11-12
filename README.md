@@ -63,7 +63,7 @@ flowchart TB
 | Testes unitários e de arquitetura | JUnit (domínio + fatias com fakes), integração com PostgreSQL real embutido, **ArchUnit**; Vitest nos BFFs, Function e frontends, com testes de arquitetura por varredura de imports |
 | Docker Hub | `Dockerfile` em cada serviço/BFF/gateway/function + `scripts/publicar-imagens.sh` + workflow `cd.yml` |
 | README em cada projeto | `README.md` em cada um dos 15 projetos e nas pastas `frontend/` e `bff/` |
-| Repositórios públicos no GitHub | `scripts/publicar-github.sh` cria um repositório por parte (microfrontends, BFF, MS Mongo, MS SQL, Function, gateway, demais serviços) + o guarda-chuva |
+| Repositórios públicos no GitHub | Repositório público [Ogasawara23/ArquiteturaNuvem](https://github.com/Ogasawara23/ArquiteturaNuvem) (monorepo): uma pasta por projeto com README, Dockerfile e CI próprios — [frontend](frontend), [bff](bff), [catalogo-service](services/catalogo-service) (Mongo), [pedido-service](services/pedido-service) (SQL), [status-operacional](functions/status-operacional) (Function). Opcional: `scripts/publicar-github.sh` separa em um repositório por projeto |
 
 ---
 
@@ -101,6 +101,9 @@ smartkds-menu/
 ---
 
 ## Como rodar localmente
+
+> **Windows:** antes de clonar, rode `git config --global core.longpaths true`. Sem isso o clone falha com
+> "Filename too long" nos pacotes Java das fatias verticais.
 
 ### Opção 1 — tudo com Docker Compose
 
@@ -162,4 +165,4 @@ Ou crie uma tag `v1` no GitHub com os segredos `DOCKERHUB_USERNAME`/`DOCKERHUB_T
 
 Roteiro em [`infra/azure/implantar.sh`](infra/azure/implantar.sh): MongoDB Atlas (M0), **Azure SQL Database** (criado pelo script), PostgreSQL (Azure Flexible B1ms ou Neon),
 CloudAMQP, Azure Container Apps (serviços e BFFs com ingresso **interno**, só o gateway é público), Azure Functions e
-Azure Static Web Apps para os microfrontends. Os links para o PDF da Entrega 3 ficam em [`docs/ENTREGA.md`](docs/ENTREGA.md).
+Azure Static Web Apps para os microfrontends ([`infra/azure/implantar-frontends.sh`](infra/azure/implantar-frontends.sh): remotes primeiro, depois os shells). Os links para o PDF da Entrega 3 ficam em [`docs/ENTREGA.md`](docs/ENTREGA.md).

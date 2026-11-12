@@ -72,6 +72,13 @@ describe('rotas', () => {
     const statusInvalido = await app.inject({ method: 'PATCH', url: '/tickets/t1/status', headers: { 'x-tenant-id': 'demo', 'x-user-roles': 'COZINHA' }, payload: { status: 'EXPEDIDO' } });
     expect(statusInvalido.statusCode).toBe(400);
 
+    // regressao: bump enviado pelo navegador com content-type JSON e corpo vazio
+    const bumpSemCorpo = await app.inject({ method: 'POST', url: '/tickets/t1/bump', headers: { 'x-tenant-id': 'demo', 'x-user-roles': 'COZINHA', 'content-type': 'application/json' } });
+    expect(bumpSemCorpo.statusCode).toBe(204);
+
+    const jsonMalformado = await app.inject({ method: 'PATCH', url: '/tickets/t1/status', headers: { 'x-tenant-id': 'demo', 'x-user-roles': 'COZINHA', 'content-type': 'application/json' }, payload: '{status:' });
+    expect(jsonMalformado.statusCode).toBe(400);
+
     const openapi = await app.inject({ method: 'GET', url: '/openapi.json' });
     expect(Object.keys(openapi.json().paths)).toContain('/estacoes/{estacaoId}/tickets');
     await app.close();
