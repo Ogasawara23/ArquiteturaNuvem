@@ -32,6 +32,9 @@
     h2 { page-break-before: always; }
     .capa + h2 { page-break-before: auto; }
     .mermaid, table, .print { page-break-inside: avoid; }
+    h2, h3, .mermaid { break-after: avoid; page-break-after: avoid; }
+    table.quebra { page-break-inside: auto; break-inside: auto; }
+    table.quebra tr { break-inside: avoid; }
   }
 </style>
 </head>
@@ -46,12 +49,12 @@
 
 <p>Este documento complementa a documentação arc42 das entregas anteriores com o que foi implementado e publicado na
 Entrega 3: links, Software Architecture Canvas e C4 atualizados (contexto, contêineres e componentes), decisões novas
-e os prints exigidos. Para gerar o PDF, abra este arquivo no navegador e use <i>Imprimir → Salvar como PDF</i>.</p>
+e os prints exigidos. As seções do arc42 que não aparecem aqui permanecem válidas como estão no documento da Entrega 2.</p>
 
 <h2>1. Links da entrega</h2>
 <p class="nota">Endereços da publicação na Azure (Azure for Students). Só o API Gateway e os microfrontends são públicos;
-BFFs e microsserviços ficam no ingresso interno do Container Apps. Falta apenas o link do vídeo.</p>
-<table>
+BFFs e microsserviços ficam no ingresso interno do Container Apps.</p>
+<table class="quebra">
   <tr><th>Item</th><th>Link</th></tr>
   <tr><td>GitHub — repositório público (monorepo: documentação, compose, infra e todos os projetos)</td><td><code>https://github.com/Ogasawara23/ArquiteturaNuvem</code></td></tr>
   <tr><td>GitHub — Microfrontend</td><td><code>https://github.com/Ogasawara23/ArquiteturaNuvem/tree/main/frontend</code></td></tr>
@@ -70,7 +73,7 @@ BFFs e microsserviços ficam no ingresso interno do Container Apps. Falta apenas
   <tr><td>Frontend — operação (gerente, cozinha, atendente)</td><td><code>https://shell-operacao.livelyforest-4b10050b.chilecentral.azurecontainerapps.io</code></td></tr>
   <tr><td>Frontend — mesa do cliente (QR Code)</td><td><code>https://shell-mesa.livelyforest-4b10050b.chilecentral.azurecontainerapps.io/m/demo-mesa-1</code></td></tr>
   <tr><td>Serviços gerenciados</td><td>Azure SQL Database <code>sql-smartkds-8759/smartkds_pedido</code> (Basic) · MongoDB Atlas M0 (AWS São Paulo) · PostgreSQL no Neon (AWS São Paulo) · LavinMQ na CloudAMQP (AWS São Paulo)</td></tr>
-  <tr><td>Vídeo no YouTube</td><td><code class="preencher">https://youtu.be/&lt;id&gt;</code></td></tr>
+  <tr><td>Vídeo no YouTube (não listado)</td><td><code>https://youtu.be/Dmo9zGaiTEY</code></td></tr>
 </table>
 
 <h3>1.1 Requisitos da Entrega 3 e onde estão atendidos</h3>
@@ -248,6 +251,45 @@ flowchart LR
 </pre>
 <figcaption>Figura E3-5: C4 Nível 3, Componentes do catalogo-service</figcaption>
 
+<h3>5.4 API Gateway: filtros de borda e rotas</h3>
+<pre class="mermaid">
+flowchart TB
+  NAV["Microfrontends<br/>(navegador)"] --> SEG["borda/ConfiguracaoDeSeguranca<br/>Resource Server JWT (Keycloak),<br/>papéis por prefixo, ?access_token no SSE"]
+  SEG -.->|JWKS| KC["Keycloak"]
+  SEG --> CTX["borda/FiltroDeContexto (GlobalFilter)<br/>sobrescreve X-Tenant-Id, X-User-Id, X-User-Roles;<br/>gera X-Correlation-Id"]
+  CTX --> LIM["borda/LimitadorDeTaxa (GlobalFilter)<br/>BaldeDeTokens por tenant / por IP"]
+  LIM --> ROT["Rotas (application.yml)<br/>StripPrefix=2, CORS, X-Forwarded-Prefix<br/>/interno/** bloqueado"]
+  ROT -->|/bff/mesa/**| BM["bff-mesa"]
+  ROT -->|/bff/kds/**| BK["bff-kds"]
+  ROT -->|/bff/admin/**| BA["bff-admin"]
+  ROT -->|/docs/**| DOC["catálogo · pedido · produção ·<br/>estabelecimento (somente Swagger)"]
+</pre>
+<figcaption>Figura E3-6: C4 Nível 3, Componentes do API Gateway</figcaption>
+
+<h3>5.5 Microfrontends: shells e remotes</h3>
+<pre class="mermaid">
+flowchart LR
+  subgraph SO["shell-operacao (host)"]
+    AR["AppRouter + remotes/RemoteLoader<br/>(lazy, fallback por remote)"]
+    SS["sessao/ContextoDeSessao<br/>OIDC + PKCE (token só em memória)"]
+    DS1["design-system/tokens.css"]
+  end
+  subgraph SM["shell-mesa (host)"]
+    QR["qrToken: lê /m/:qrToken da URL"]
+    DS2["design-system/tokens.css"]
+  end
+  AR -->|remoteEntry.js| KDS["mfe-kds<br/>TelaProducao, CartaoDeTicket,<br/>useStreamDeTickets (SSE)"]
+  AR -->|remoteEntry.js| CAR["mfe-cardapio<br/>TelaCardapio, FormularioDeItem"]
+  AR -->|remoteEntry.js| GES["mfe-gestao<br/>Painel (/aggregated-data), Operacao"]
+  QR -->|remoteEntry.js| COM["mfe-comanda<br/>TelaComanda, ModalDoItem"]
+  KDS --> A1["src/api/bffKdsClient"]
+  CAR --> A2["src/api/bffCardapioClient"]
+  GES --> A3["src/api/bffGestaoClient"]
+  COM --> A4["src/api/bffMesaClient"]
+  A1 & A2 & A3 & A4 --> GW["API Gateway"]
+</pre>
+<figcaption>Figura E3-7: C4 Nível 3, Componentes dos microfrontends (cada remote é um Container App com nginx, carregado em tempo de execução pelo <code>remoteEntry.js</code>; os remotes só falam com o BFF pelo gateway)</figcaption>
+
 <h2>6. Alterações nas seções do arc42</h2>
 <h3>6.1 Seção 4.3 — bancos por serviço</h3>
 <table>
@@ -294,7 +336,7 @@ flowchart TB
   S --> SQLDB & ATLAS & PG & AMQP
   B --> AMQP
 </pre>
-<figcaption>Figura E3-6: Implantação da Entrega 3</figcaption>
+<figcaption>Figura E3-8: Implantação da Entrega 3</figcaption>
 
 <h3>6.4 Decisões arquiteturais novas</h3>
 <table>

@@ -19,7 +19,7 @@ Este arquivo reúne o que precisa entrar no PDF arc42 da Entrega 3. O conteúdo 
 | Azure Function | `https://smartkds-status-5560.azurewebsites.net/api/status-operacional?tenantId=demo` |
 | Frontend — operação | `https://shell-operacao.livelyforest-4b10050b.chilecentral.azurecontainerapps.io` |
 | Frontend — mesa (QR Code) | `https://shell-mesa.livelyforest-4b10050b.chilecentral.azurecontainerapps.io/m/demo-mesa-1` |
-| Vídeo no YouTube | `https://youtu.be/<id>` |
+| Vídeo no YouTube (não listado) | `https://youtu.be/Dmo9zGaiTEY` |
 
 ## 2. Passo a passo de publicação
 
